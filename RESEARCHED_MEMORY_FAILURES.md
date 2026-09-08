@@ -649,9 +649,31 @@ Again, that is almost exactly the temporal model we independently derived.
 
 ---
 
+# Post-saturation gap audit — failures 56–61
+
+A further gap audit found six failure modes that are distinct enough to deserve explicit treatment rather than being folded into the existing 55.
+
+| # | Failure actually observed | What happened |
+|---:|---|---|
+| 56 | **False deduplication / false equivalence across scopes** | Cherry Studio used a global content hash in a way that could treat identical memory text from different users as the same memory. That means one user's existing memory could suppress another user's legitimate write and could potentially reveal that identical content existed elsewhere. This is the inverse of duplicate creation: separate valid memories are incorrectly collapsed. ([github.com](https://github.com/CherryHQ/cherry-studio/issues/15411)) |
+| 57 | **Authorization works on one retrieval path but fails on another** | AgentMemory applied isolated-agent filtering on some APIs while other retrieval paths such as `mem::search`, `memory_recall`, and `recall_context` omitted the scope check, allowing one agent to retrieve another agent's memory. The important failure is policy-enforcement asymmetry: every read path must enforce the same authorization boundary. ([github.com](https://github.com/rohitg00/agentmemory/issues/817)) |
+| 58 | **Adversarial memory extraction / exfiltration** | MEXTRA, accepted at ACL 2025, demonstrates a different security failure from memory poisoning: an attacker can deliberately probe or manipulate a memory-enabled agent to extract sensitive information that is already legitimately stored in long-term memory. Memory confidentiality therefore has to be defended at retrieval and disclosure time, not only at ingestion time. ([github.com](https://github.com/wangbo9719/MEXTRA)) |
+| 59 | **Consolidation silently falls back and stops cleaning memory** | An OpenClaw multi-agent consolidation failure lost ownership metadata, failed before the consolidation model could run, and then silently fell back to append-only behavior while the overall job appeared healthy. Duplicate and stale memories could therefore continue accumulating even though the maintenance subsystem looked operational. ([github.com](https://github.com/openclaw/openclaw/issues/134687)) |
+| 60 | **Recursive summarization loses operationally load-bearing detail** | Sanity describes long-running agents retaining the broad narrative after repeated summarization while losing exact implementation details required to continue correctly. The agent may remember that authentication was discussed while forgetting the concrete decisions, identifiers, or constraints that actually govern the next action. This is semantic compression / lossy abstraction rather than simple context overflow. ([sanity.io](https://www.sanity.io/blog/how-we-solved-the-agent-memory-problem)) |
+| 61 | **Inconsistent backup/restore resurrects deleted or superseded memory** | If authoritative state and vector/derived state are backed up at different points in time, restoring them together can combine incompatible generations. Deleted, expired, or superseded memories can become searchable or active again after recovery. Backup consistency is therefore part of memory correctness, not merely operations. ([ssdnodes.com](https://www.ssdnodes.com/learn/agent-memory-staleness-and-pruning)) |
+
+These six add four important lessons that were previously under-specified:
+
+1. **Deduplication needs scope-aware identity.** Similar or identical text does not imply the same memory object.
+2. **Authorization must be path-complete.** Every search, recall, context-builder, graph lookup, and direct-read path must apply the same scope and permission rules.
+3. **Confidentiality must survive retrieval.** It is not enough to prevent sensitive material from being written; authorized stored memory must also resist adversarial extraction.
+4. **Maintenance and recovery are memory mutations.** Consolidation, compaction, backup, restore, and deduplication can all corrupt the world model and require the same verification rigor as ordinary writes.
+
+---
+
 # The complete failure space is now clearer
 
-After both passes, I would divide real agent-memory failures into **14 major families**:
+After all three research passes, there are **61 explicitly documented failure modes** in this source of truth. They still collapse usefully into **14 major families**:
 
 | Failure family | Examples |
 |---|---|
@@ -659,16 +681,16 @@ After both passes, I would divide real agent-memory failures into **14 major fam
 | **2. Omission** | important fact never written, pending memory lost during compaction |
 | **3. Temporal corruption** | stale truth remains active, old and new facts coexist, expired memory recalled |
 | **4. Provenance corruption** | source message unavailable, author identity overwritten, inference appears factual |
-| **5. Scope/identity corruption** | cross-user bleed, user IDs mutated, entity merges cross boundaries |
+| **5. Scope/identity corruption** | cross-user bleed, user IDs mutated, entity merges across boundaries, false cross-scope deduplication |
 | **6. Mutation corruption** | lost concurrent writes, stale reviewers overwrite new state, metadata disappears |
-| **7. Deletion/forgetting corruption** | deletion incomplete, deletion too broad, deleted memories remain indexed |
-| **8. Derived-state drift** | text differs from vectors, graph differs from vector store, UI differs from backend |
+| **7. Deletion/forgetting corruption** | deletion incomplete, deletion too broad, deleted memories remain indexed, restored memories resurrect |
+| **8. Derived-state drift** | text differs from vectors, graph differs from vector store, UI differs from backend, backup generations mismatch |
 | **9. Retrieval failure** | wrong memory, missing memory, truncated candidate pool, reranker disabled |
-| **10. Retrieval-policy failure** | memory skipped when needed, searched repeatedly when useless |
-| **11. Adherence failure** | correct memory retrieved but ignored or treated as malicious |
-| **12. Context/compaction corruption** | useful details disappear, stale task becomes current, summaries become durable facts |
+| **10. Retrieval-policy failure** | memory skipped when needed, searched repeatedly when useless, authorization applied inconsistently |
+| **11. Adherence/disclosure failure** | correct memory retrieved but ignored, treated as malicious, or disclosed to an adversary |
+| **12. Context/compaction corruption** | useful details disappear, stale task becomes current, summaries become durable facts, recursive summaries lose operational detail |
 | **13. Durability/transaction failure** | partial commits, serialization errors, locking, restart loss, DB corruption |
-| **14. Lifecycle/hygiene failure** | uncontrolled growth, duplication, bad decay metrics, stale facts never retired |
+| **14. Lifecycle/hygiene failure** | uncontrolled growth, duplication, bad decay metrics, stale facts never retired, consolidation silently stops working |
 
 That is a much more useful model than talking about “recall accuracy.”
 
@@ -856,6 +878,10 @@ NO DIRECT AGENT-GENERATED FACT AUTHORITY
 
 IMMUTABLE SCOPE / IDENTITY FIELDS
 
+SCOPE-AWARE DEDUPLICATION
+
+PATH-COMPLETE AUTHORIZATION
+
 PROVENANCE FOR EVERY CONSEQUENTIAL MEMORY
 
 EXPLICIT SUPERSESSION
@@ -865,6 +891,12 @@ FRESHNESS / VALIDITY
 PENDING-WRITE FLUSH BEFORE COMPACTION OR SHUTDOWN
 
 CONTEXT COMPACTION SEPARATE FROM DURABLE MEMORY
+
+CONSOLIDATION HEALTH MUST BE OBSERVABLE
+
+CONSISTENT BACKUP / RESTORE GENERATIONS
+
+ADVERSARIAL MEMORY-DISCLOSURE TESTS
 
 INDEX REBUILD TEST
 
@@ -902,6 +934,10 @@ They are:
 > **The system said a write/delete succeeded when durable reality disagreed.**
 
 > **The agent's own generated artifacts became feedback into future truth.**
+
+> **A legitimate memory was merged, hidden, or exposed because scope enforcement differed across lifecycle paths.**
+
+> **A backup, summary, or consolidation process silently changed what the agent believed.**
 
 That substantially reinforces the architecture we were converging on:
 
