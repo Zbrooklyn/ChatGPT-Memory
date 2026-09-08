@@ -1,250 +1,153 @@
 # Claude Memory — Master Source of Truth
 
-**Version:** 1.1 — Exhaustive Evidence Ledger  
+**Version:** 1.2 — Exhaustive Current-State Reconciliation  
 **Last verified:** September 8, 2026  
-**Supersedes:** Version 1.0  
-**Scope:** Claude consumer Chat memory, Projects, cloud Cowork, past-chat search, memory import/export, Incognito, sensitive-memory controls, organization governance, Monthly Recap, Claude Code `CLAUDE.md`/rules/auto-memory/compaction/subagents, Claude API Memory Tool, Managed Agent Memory Stores, Dreams, current implementation evidence from captured Claude prompts, architectural inferences, failure modes, experiments, and hard unknowns.  
-**Purpose:** Maintain one canonical, evidence-graded and deliberately exhaustive account of everything currently established about Claude memory within the evidence corpus listed here.
+**Supersedes:** Version 1.1  
+**Scope:** Claude consumer Chat memory, Projects, cloud Cowork, past-chat search, import/export, Incognito, sensitive-memory controls, organization governance, Monthly Recap, Claude Code `CLAUDE.md`/rules/auto-memory/compaction/subagents, Claude API Memory Tool, Managed Agent Memory Stores, Dreams, captured consumer implementation evidence, failure modes, experiments, and hard unknowns.  
+**Purpose:** Maintain one canonical, evidence-graded, deliberately exhaustive account of what is currently established about Claude memory across the evidence corpus listed here.
 
-> **Completeness boundary:** “Exhaustive” means exhaustive with respect to current public Anthropic documentation plus the specifically identified implementation evidence reviewed as of the verification date. It does not mean undocumented production internals are known. Those remain explicitly listed as unknown.
+> **Completeness boundary:** “Exhaustive” means exhaustive with respect to the current public Anthropic documentation and the specifically identified implementation evidence reviewed as of the verification date. It does **not** mean undocumented production internals are known. Anything not supported by that corpus remains explicitly unknown.
 
 ---
 
-# 1. Bottom Line
+# 1. Executive conclusion
 
-The strongest evidence supports this conclusion:
+The strongest evidence supports one high-level conclusion:
 
-**Claude does not have one single memory system. It has a family of external persistence, retrieval, instruction, knowledge, and consolidation mechanisms whose behavior differs by product surface.**
+> **Claude does not have one memory system. It has a family of external persistence, retrieval, instruction, knowledge, and consolidation mechanisms whose behavior differs by product surface.**
 
-Consumer Claude now uses individual categorized memory topics/files plus a separate historical chat-search mechanism. Projects create isolated memory/search domains and dedicated project summaries while also providing Project Knowledge and RAG. Claude Chat and cloud Cowork share consumer memory; local Cowork does not. Claude Code independently uses human-authored instruction files plus local Claude-authored auto-memory with an index-and-topic-file design. The Claude API exposes a developer-owned filesystem-like Memory Tool. Managed Agents add durable Memory Stores with read/write access modes, version history, optimistic concurrency, sandbox mounts, self-hosted synchronization, and a research-preview consolidation process called Dreams.
-
-The most important cross-product principle is:
-
-> **The model is not the durable memory. Durable state lives outside the model and relevant state is selectively supplied back into model context.**
-
-Current best reconstruction:
+The common pattern is:
 
 ```text
-                         AUTHORITATIVE SOURCES
-                 repos | docs | email | APIs | DBs
-                              │
-                              ▼
-                            TOOLS
-                              │
-
- HISTORICAL EVIDENCE ─── CURRENT CLAUDE ─── PROJECT KNOWLEDGE
- chat history / RAG            │                  RAG
-                               │
-                               ▼
-                            RESPONSE
-                               │
-                               ▼
-                    MEMORY MAINTENANCE
-                               │
-                    admission / durability
-                               │
-                    subject/entity routing
-                               │
-                    provenance / correction
-                               │
-                    safe persistent update
-                               │
-                               ▼
-                         DURABLE MEMORY
-                               │
-                 ┌─────────────┴─────────────┐
-                 │                           │
-            routing/index              detailed state
-                 │                           │
-                 └──────── JIT retrieval ────┘
-                               │
-                               ▼
-                         FUTURE CLAUDE
-
-                               +
-                      periodic consolidation
-                               │
-                               ▼
-                            DREAMS
-                  (Managed Agents currently)
+model context      = temporary working cognition
+external memory    = durable adaptive state
+historical search  = recovery of specific prior episodes
+source systems     = authoritative reality
+instructions       = behavioral guidance
+hooks/settings     = deterministic enforcement
 ```
 
-The full diagram is a reconstruction. Its major pieces are independently supported by current Anthropic documentation or clearly marked implementation evidence.
+Current Claude consumer memory uses individual categorized memory topics/files plus a separate historical chat-search system. Projects create isolated memory/search domains and dedicated project summaries while also providing Project Knowledge and RAG. Claude Chat and **cloud Cowork** share consumer memory; local Cowork does not. Claude Code independently uses human-authored instruction files plus local Claude-authored auto-memory organized as an index plus topic files. The Claude API exposes a developer-owned filesystem-style Memory Tool. Managed Agents add durable Memory Stores with access modes, version history, optimistic concurrency, sandbox mounts, self-hosted synchronization, and memory consolidation through Dreams.
+
+The strongest reusable design rule is:
+
+> **Store the irrecoverable residue; re-query authoritative reality.**
 
 ---
 
-# 2. Evidence Standard
+# 2. Evidence classes and precedence
 
-Every material claim in this document belongs to one of four classes.
+## A — Confirmed Anthropic product fact
 
-## A — Confirmed Anthropic Product Fact
+Explicitly documented in current Anthropic support, product, Claude Code, Claude Platform/API, or Managed Agent documentation.
 
-Explicitly documented in current Anthropic product, support, Claude Code, Claude Platform/API, or Managed Agent documentation.
+## B — Strong implementation evidence
 
-## B — Strong Implementation Evidence
+Observed in current captured Claude system instructions or client/export behavior that closely matches official functionality but is **not** an Anthropic-authenticated product contract.
 
-Observed in current captured Claude system instructions, exports, or client behavior that closely aligns with official functionality but is **not** an Anthropic-authenticated product contract.
+## C — Architectural inference
 
-## C — Architectural Inference
-
-A conclusion strongly suggested by multiple A/B facts but not directly stated by Anthropic.
+A conclusion strongly supported by multiple A/B facts but not directly stated by Anthropic.
 
 ## U — Unknown
 
-No sufficient current evidence. Unknowns must not be silently filled with plausible assumptions.
+No sufficient current evidence.
+
+When sources conflict, use this order:
+
+1. newer feature-specific Anthropic API/product documentation;
+2. current Anthropic general documentation;
+3. current Claude Code / Platform / Managed Agent documentation;
+4. older Anthropic documentation retained for history;
+5. reproducible implementation evidence;
+6. captured system prompts / client observations;
+7. community speculation.
+
+**Freshness controls.** The current API reference can expose a newer capability that an overview page has not yet incorporated.
 
 ---
 
-# 3. Source Precedence
+# 3. The Claude ecosystem has multiple distinct “memory” layers
 
-When evidence conflicts, use this order:
-
-1. Newer, feature-specific current Anthropic documentation.
-2. Current Anthropic general documentation.
-3. Current Claude Code / Claude Platform / Managed Agent documentation.
-4. Older Anthropic documentation retained for historical lineage.
-5. Reproducible implementation observations.
-6. Captured system prompts and client/export observations.
-7. Community speculation.
-
-Freshness matters. A newer Anthropic page overrides stale wording in this document or in older Anthropic pages.
-
----
-
-# 4. Terminology: “Memory” Is Not One Thing
-
-**Class: A/C**
-
-Within the Claude ecosystem, at least these distinct mechanisms exist:
-
-| Mechanism | What it does | Persistent? | Scope |
+| Mechanism | Purpose | Persistence | Scope |
 |---|---|---:|---|
-| Consumer Claude Memory | Durable user/project context as individual topics/files | Yes | non-project or per Project |
-| Past Chat Search | Retrieves specific historical conversations with RAG | History-dependent | non-project or per Project |
-| Project Summary | Dedicated compressed project context | Yes/current-state | one Project |
-| Project Knowledge | Uploaded/project knowledge | Yes | one Project |
-| Project Knowledge RAG | Retrieves relevant project knowledge when needed | Derived retrieval | one Project |
-| User preferences/styles | Personalization instructions, distinct from memory | Yes | account/product scope |
-| Claude Code `CLAUDE.md` | Human-authored persistent guidance | Yes | managed/user/project/local/path scope |
-| Claude Code auto-memory | Claude-authored learned context | Yes, local | repo/project scope |
-| Claude Code subagent memory | Agent-specific learned context | Yes | user/project/local agent scope |
-| API Memory Tool | Developer-owned persistent memory abstraction | Developer-defined | application-defined |
-| Managed Agent Memory Stores | Durable text-document stores mounted to agents | Yes | workspace/store/session attachment |
-| Dreams | Offline consolidation into a new Memory Store | Produces durable output | Managed Agents |
-| Context compaction | Compresses active conversational context | Workflow continuity | current run/session |
-| Monthly Recap | Reflective analysis of recent usage/history | Derived output | consumer account |
+| Consumer Claude Memory | durable user/project context as Topics/files | Yes | non-project or one Project |
+| Past Chat Search | retrieve specific old conversations via RAG | history-dependent | non-project or one Project |
+| Project Summary | compressed project continuity | persistent/derived | one Project |
+| Project Knowledge | user-provided project files/knowledge | Yes | one Project |
+| Project Knowledge RAG | retrieve relevant project knowledge | derived retrieval | one Project |
+| User preferences/styles | personalization instructions distinct from memory | Yes | account/product scope |
+| Claude Code `CLAUDE.md` | human-authored instructions | Yes | managed/user/project/local/path scope |
+| Claude Code `.claude/rules/` | modular/path-scoped instructions | Yes | user/project/path scope |
+| Claude Code auto-memory | Claude-authored learned context | Yes, local | repository/project identity |
+| Claude Code subagent memory | agent-specific learned context | Yes | user/project/local agent scope |
+| API Memory Tool | developer-owned persistent memory abstraction | developer-defined | application-defined |
+| Managed Agent Memory Stores | persistent text documents mounted to agents | Yes | workspace/store/session attachment |
+| Managed Memory Versions | immutable audit/history of mutations | Yes, retention-bounded | Memory Store |
+| Dreams | offline/asynchronous memory consolidation | produces/writes durable memory | Managed Agents |
+| Context compaction | compress active conversational state | workflow/session | active run |
+| Monthly Recap | reflective analysis of recent usage/history | derived | consumer account |
 
-The terms should not be collapsed into one generic “memory store.”
+These mechanisms should not be conflated.
 
 ---
 
-# 5. Consumer Memory Product Evolution
+# 4. Consumer Claude Memory — current product source of truth
 
-## 5.1 Legacy consumer memory
+## 4.1 Product evolution
 
-**Class: A — historical/current for a small migration remainder**
+**A. Legacy design.** The older consumer system periodically synthesized a memory summary from conversation history. Remaining legacy Team/Enterprise organizations may still temporarily use that behavior, with synthesis documented at roughly a 24-hour cadence.
 
-The legacy architecture synthesized a memory summary periodically from conversation history. For remaining legacy Team/Enterprise organizations, the synthesis is described as refreshing approximately every 24 hours. Project memory remains separate from standalone/non-project memory.
+**A. July 10, 2026.** Anthropic changed normal consumer memory from a synthesized summary to **individual categorized entries/topics that Claude reads and updates during conversations**.
 
-## 5.2 July 10, 2026 architecture change
+**A. August 25, 2026.** Anthropic expanded the current system so Claude Chat and **cloud Cowork** share memory, Topics are directly editable, and sensitive-memory controls are exposed.
 
-**Class: A**
+**A. Migration.** A small number of Team/Enterprise organizations may still be on legacy memory. Migrated users can export legacy memory through **September 9, 2026** if something was lost in migration.
 
-On **July 10, 2026**, Anthropic replaced the normal consumer daily-summary architecture with **individual categorized memory entries/topics that Claude can read and update during conversations**.
-
-```text
-LEGACY
-many chats
-  ↓
-periodic global synthesis
-  ↓
-memory summary
-
-CURRENT
-conversation
-  ↓
-individual durable memory topics/files
-  ↓
-read/update during later conversations
-```
-
-## 5.3 August 25, 2026 expansion
-
-**Class: A**
-
-Anthropic expanded the system so Chat and **cloud Cowork** share memory, Topics are directly editable, and sensitive-topic controls are exposed.
-
-## 5.4 Remaining legacy migration
-
-**Class: A**
-
-A small number of Team/Enterprise organizations may still temporarily use legacy memory. Anthropic documents a legacy-memory export window ending **September 9, 2026** for migrated users who need to recover content that did not carry forward as expected.
-
-Primary sources:
+Sources:
 
 - https://support.claude.com/en/articles/12138966-release-notes
 - https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
 - https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-claude
 
----
+## 4.2 Modern consumer memory is topic/file-oriented
 
-# 6. Current Consumer Memory Is File/Topic-Oriented
-
-**Class: A**
-
-Anthropic describes everything Claude remembers as a **list of short files under Topics** in Memory settings. Users can inspect, edit, or delete individual topics instead of manipulating one opaque global summary.
+**A.** Anthropic describes everything Claude remembers as a **list of short files under Topics** in Memory settings. Users can inspect, edit, and delete these individually.
 
 ```text
 Memory
- ├── topic/file
- ├── topic/file
- ├── topic/file
+ ├── Topic/file
+ ├── Topic/file
+ ├── Topic/file
  └── ...
 ```
 
-This officially establishes the product-facing file/topic model.
+This establishes a product-facing file/topic abstraction. It does **not** prove that Anthropic physically stores Markdown files on a filesystem.
 
-It does **not** establish that Anthropic physically stores Markdown files on disk. A file abstraction may map to database/object-store records.
+**Physical storage backend: U.**
 
-**Physical storage backend: U**
-
-Primary sources:
+Sources:
 
 - https://claude.com/blog/claudes-memory-works-everywhere-and-you-decide-whats-in-it
 - https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
 
----
+## 4.3 Memory is written while you chat
 
-# 7. Consumer Memory Is Written While You Chat
-
-**Class: A**
-
-Claude adds useful memory during ordinary conversations rather than waiting for a daily synthesis pass. An updated deadline or durable project detail can therefore become available to future conversations as the user chats.
-
-Users can also explicitly request operations such as:
+**A.** The current system adds useful memory during ordinary conversation rather than waiting for a daily synthesis. Users can also explicitly say things equivalent to:
 
 ```text
-Remember this.
-Remember that X.
+Remember X.
 Update what you remember about X.
 Forget X.
 ```
 
-Changes to Topics apply to future conversations.
+Topic edits apply to future conversations.
 
-Primary source:
+## 4.4 What Claude is documented to remember
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+**A.** Anthropic lists durable collaboration-oriented context including:
 
----
-
-# 8. What Consumer Claude Is Documented to Remember
-
-**Class: A**
-
-Anthropic lists durable collaboration-oriented information including:
-
-- professional role and professional context;
+- professional role and context;
 - projects and ongoing work;
 - important people;
 - important places;
@@ -253,330 +156,159 @@ Anthropic lists durable collaboration-oriented information including:
 - technical preferences;
 - coding preferences;
 - project details;
-- ongoing decisions and constraints useful in future work.
+- durable decisions/constraints useful later.
 
-Memory admission is selective:
+**A/C.** Mentioning something does not guarantee admission to memory. The exact production admission/ranking model is unknown.
 
-```text
-mentioned
-   ≠
-automatically remembered
-```
+## 4.5 Current availability
 
-The exact production admission algorithm is unknown.
+**A.** Current generated memory is documented across web, Desktop, and supported mobile apps.
 
-Primary source:
+- Free: enabled by default.
+- Pro: enabled by default.
+- Max: enabled by default.
+- Team: organization-level availability off until an Owner enables it.
+- Enterprise: organization-level availability off until an Owner enables it.
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+UI details can vary by app version.
 
----
+## 4.6 Chat and cloud Cowork share consumer memory
 
-# 9. Current Consumer Memory Availability
-
-**Class: A**
-
-Current new memory is documented on web, Desktop, and supported mobile apps.
-
-At the account/product level:
-
-- **Free:** memory enabled by default.
-- **Pro:** enabled by default.
-- **Max:** enabled by default.
-- **Team:** organizationally off until an owner enables it.
-- **Enterprise:** organizationally off until an owner enables it.
-
-The precise UI may vary by platform/app version.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 10. Chat and Cloud Cowork Share Consumer Memory
-
-**Class: A**
-
-Claude Chat and **cloud Cowork** use the same memory in both directions.
+**A.** Chat and **cloud Cowork** share current consumer memory bidirectionally.
 
 ```text
-              shared consumer memory
-             ↗                      ↖
-        Claude Chat              cloud Cowork
+                shared consumer memory
+               ↗                      ↖
+          Claude Chat              cloud Cowork
 ```
 
-A memory learned in Chat may help cloud Cowork, and context learned through cloud Cowork may later help Chat.
+**A.** Local Cowork does not participate in the same cloud memory system.
 
-**Local Cowork does not participate in this cloud shared-memory behavior.**
+**U.** There is no official evidence that Claude Code auto-memory is synchronized with this consumer store.
 
-There is no current official evidence that Claude Code auto-memory is synchronized with the same store.
+## 4.7 Projects are isolated memory namespaces
 
-```text
-Chat ↔ cloud Cowork
-        shared
+**A.** Each Project has:
 
-Claude Code auto-memory
-        separate local system
-```
+- its own memory space;
+- a dedicated project summary.
 
-Primary sources:
+Project memory is isolated from ordinary non-project memory and from other Projects. Moving a conversation into or out of a Project changes the relevant memory/search domain.
 
-- https://claude.com/blog/claudes-memory-works-everywhere-and-you-decide-whats-in-it
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 11. Projects Are Separate Memory Namespaces
-
-**Class: A**
-
-Each Claude Project has:
-
-1. its own **memory space**; and
-2. a **dedicated project summary**.
-
-Project memory is isolated from ordinary non-project memory and from other Projects.
-
-```text
-Claude account
-│
-├── non-project memory
-│
-├── Project A
-│   ├── isolated project memory
-│   └── dedicated project summary
-│
-└── Project B
-    ├── isolated project memory
-    └── dedicated project summary
-```
-
-Moving a conversation into or out of a Project changes the memory/search domain to which it belongs.
-
-Primary sources:
+Sources:
 
 - https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
 - https://support.claude.com/en/articles/9519177-how-can-i-create-and-manage-projects
 
----
+## 4.8 Project memory is not Project Knowledge
 
-# 12. Project Memory, Summary, Instructions, Knowledge, and RAG Are Distinct
-
-**Class: A**
-
-A Project can simultaneously expose:
+**A.** A Project can simultaneously expose:
 
 ```text
 current conversation
-+
-project instructions
-+
-project memory
-+
-dedicated project summary
-+
-project conversation history
-+
-past-chat search inside the project
-+
-project uploaded knowledge/files
-+
-project-knowledge RAG
++ project instructions
++ project memory
++ dedicated project summary
++ project conversation history
++ project-scoped past-chat search
++ Project Knowledge/files
++ Project Knowledge RAG
 ```
 
-These are separate context mechanisms.
+**A.** Project Knowledge RAG is separate from generated memory. It activates automatically as project knowledge approaches/exceeds direct-context capacity and can fall back to direct context if the knowledge set shrinks. Anthropic says it can expand practical project knowledge capacity by up to approximately **10×**.
 
-Project Knowledge can be provided directly while small enough. As it approaches/exceeds context limits, Claude can use RAG to retrieve relevant material rather than loading all project knowledge every time.
+**A. Current Project RAG plans:** Free, Pro, Max, Team, Enterprise.
 
-Anthropic says this can expand practical project knowledge capacity by up to approximately **10×**.
-
-Current Project RAG documentation lists availability on:
-
-- Free;
-- Pro;
-- Max;
-- Team;
-- Enterprise.
-
-The RAG behavior is automatic; users do not have to manually build an index.
-
-Primary source:
+Source:
 
 - https://support.claude.com/en/articles/11473015-retrieval-augmented-generation-rag-for-projects
 
----
+## 4.9 Past Chat Search is a separate RAG system
 
-# 13. Past Chat Search Is Separate From Saved Memory
+**A.** Historical chat search is separate from generated memory. Anthropic explicitly describes it as RAG and surfaces it as a tool call when used.
 
-**Class: A**
-
-Claude has a separate historical retrieval capability for prior conversations. Anthropic explicitly describes past-chat search as **RAG** and exposes it as a tool call when used.
-
-Search boundaries follow memory/project boundaries:
+Scope:
 
 ```text
 non-project conversation
-   ↓
-search non-project chat history
+  → searches non-project history
 
 Project A conversation
-   ↓
-search Project A chat history only
+  → searches Project A history only
 ```
 
-Therefore Claude can appear to remember through two very different paths:
+This creates two different “remembering” paths:
 
 ```text
-SAVED MEMORY
-“I know this durable thing about the user/project.”
+Generated memory
+“I know this durable thing.”
 
-HISTORICAL RETRIEVAL
-“I found the old conversation where this occurred.”
+Historical retrieval
+“I found the old conversation where this happened.”
 ```
 
-Primary source:
+## 4.10 Past Chat Search availability and controls
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+**A.** Current documented plans: Pro, Max, Team, Enterprise. Available on web, Desktop, and Mobile.
 
----
+**A.** Once rolled out it is enabled by default but has a separate **Search and reference chats** control, independently configurable from generated memory.
 
-# 14. Past Chat Search Availability and Controls
+**A.** Incognito conversations are excluded.
 
-**Class: A**
+**A.** Enterprise organizations using customer-managed encryption keys currently cannot use Past Chat Search because the feature cannot search encrypted conversation contents in that configuration.
 
-Past-chat search is currently documented for:
+## 4.11 Pause Memory semantics
 
-- Pro;
-- Max;
-- Team;
-- Enterprise.
+**A.** Pausing memory:
 
-It is available on web, Desktop, and Mobile.
-
-Once rolled out, Anthropic documents it as enabled by default, with a separate **Search and reference chats** control. It is independently configurable from generated memory.
-
-Incognito conversations are excluded.
-
-Enterprise organizations using customer-managed encryption keys currently cannot use past-chat search because conversation contents are encrypted in a way that prevents this search feature.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 15. Pause Memory = Stop Reading and Stop Writing
-
-**Class: A**
-
-Pausing memory:
-
-- keeps existing memories stored;
-- stops Claude from using them;
-- stops Claude from generating new memories;
-- keeps sensitive memories stored but inactive;
-- does **not** retroactively learn from conversations held while memory was paused.
+- retains existing memory;
+- stops Claude from reading it;
+- stops Claude from creating new memory;
+- leaves stored sensitive memory present but inactive;
+- does not retroactively turn pause-period conversations into memory after unpausing.
 
 ```text
-Pause Memory
-   =
-stop READ
-+
-stop WRITE
+Pause = stop READ + stop WRITE
 ```
 
-Unpausing reactivates ordinary memory behavior and any retained eligible memory.
+## 4.12 Reset Memory semantics
 
-Primary source:
+**A.** Reset Memory deletes generated memory including Project memory and is documented as irreversible. Re-enabling memory starts from a new memory state.
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+## 4.13 Chat deletion and memory deletion are separate
 
----
-
-# 16. Reset Memory Is Global and Irreversible
-
-**Class: A**
-
-Reset Memory deletes all generated memory, including project memory, and Anthropic describes the action as irreversible.
-
-Re-enabling after reset starts with a new memory state.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 17. Chat Deletion and Memory Deletion Are Separate
-
-**Class: A**
-
-In the **current** memory architecture, deleting/expiring the source conversation does **not automatically delete an already-created memory entry**.
+**A.** In the modern topic-based system, deleting/expiring the source conversation does **not** automatically delete a generated memory Topic already derived from it. The Topic must be removed separately if the user wants it gone.
 
 ```text
-conversation
-   ↓
-memory entry produced
-   ↓
-conversation later deleted
-   ↓
-memory entry may remain
+source chat
+  ↓
+memory Topic created
+  ↓
+source chat deleted
+  ↓
+Topic may remain
 ```
 
-To remove the generated memory, the relevant Topic must also be removed/edited.
+## 4.14 Consumer memory data lifecycle
 
-This establishes that conversation storage and generated memory are distinct persisted objects.
+**A.** Current documentation establishes:
 
-Primary source:
+- memory follows applicable account/organization retention rules;
+- generated memory data is included in account data exports;
+- Team/Enterprise organization retention rules apply;
+- Enterprise memory entries are encrypted at rest;
+- deletion of the source chat does not itself delete an already-generated Topic;
+- organization data policy can affect Incognito/export visibility.
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+## 4.15 Topics are human-editable state
 
----
+**A.** Settings → Memory → Topics lets a user inspect, edit, and delete generated memories. Users can also request remember/change/forget operations directly in chat.
 
-# 18. Current Memory Data Lifecycle and Exports
+**A.** Historical chat search can surface links/citations to original conversations; those are separate from Topics.
 
-**Class: A**
+## 4.16 Importing memory
 
-Anthropic documents these additional data-handling facts:
-
-- current generated memory follows applicable chat/account retention policies;
-- memory can reflect changes to chats over time;
-- deleting/expiring a source chat does not itself delete the derived current-memory topic;
-- memory data is included in account data exports;
-- Team/Enterprise organizational retention rules apply as documented;
-- Enterprise memory entries are encrypted at rest.
-
-For organization accounts, memory and Incognito/export behavior are governed by the organization's data policies in addition to user controls.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 19. Memory Topics Are Directly Editable
-
-**Class: A**
-
-Under Settings → Memory → Topics, users can inspect individual memory topics/files, edit them, or delete them. Changes affect future conversations.
-
-Users can also ask Claude in chat to remember, change, or forget relevant information.
-
-Past-chat search results can surface links/citations to original conversations, which are separate from generated Topics.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 20. Memory Import Is a First-Class Product Feature
-
-**Class: A**
-
-Claude can import memory material from another AI provider.
-
-The documented flow allows a user to paste exported memory/profile information and have Claude extract useful material into individual memory entries.
+**A.** Claude can import memory/profile material exported from another AI provider and extract useful information into individual memory entries.
 
 Current documented import availability:
 
@@ -587,53 +319,23 @@ Current documented import availability:
 - web;
 - Claude Desktop.
 
-Anthropic describes import as **experimental**. It may not retain every item.
+**A.** Import is experimental and may omit material.
 
-The importer is specifically work-oriented; Claude may discard imported personal material that is unrelated to its collaboration/work memory focus.
+**A.** The importer is work-oriented; Claude may discard personal information that does not fit its collaboration/work memory focus.
 
-Primary source:
-
-- https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-claude
-
----
-
-# 21. Memory Export and Portability
-
-**Class: A**
-
-Claude supports exporting memory. Anthropic explicitly describes the ability to view/export memory in the form Claude sees it, including asking Claude to write out its memories verbatim.
-
-Architectural implication:
-
-> Consumer AI memory is becoming portable user state rather than an entirely opaque vendor-owned profile.
-
-**Class for implication: C**
-
-Primary source:
+Source:
 
 - https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-claude
 
----
+## 4.17 Exporting memory
 
-# 22. Legacy Memory Export Window
+**A.** Users can export memory and can ask Claude to write out the memories it sees verbatim/exactly as stored in the product-facing representation.
 
-**Class: A**
+**C.** This makes memory increasingly portable user state rather than a completely opaque internal profile.
 
-As of September 8, 2026, migrated users can still export legacy memory through **September 9, 2026** if they believe information failed to migrate correctly.
+## 4.18 Sensitive topics are excluded by default
 
-This is a migration detail, not the design of the modern memory system.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 23. Sensitive Topics Are Excluded by Default
-
-**Class: A**
-
-By default Claude avoids automatically saving sensitive categories including areas such as:
+**A.** Default auto-memory excludes many sensitive categories including areas such as:
 
 - health;
 - race;
@@ -643,245 +345,163 @@ By default Claude avoids automatically saving sensitive categories including are
 - gender identity;
 - similar sensitive attributes.
 
-Users can enable **Include sensitive topics in memory** where available.
+Users can opt into **Include sensitive topics in memory** where available.
 
-Primary source:
+## 4.19 Sensitive-memory opt-in semantics
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+**A.** Enabling sensitive memory is prospective, not retroactive.
 
----
+Current documented behavior includes:
 
-# 24. Sensitive-Memory Opt-In Semantics
+- eligible future sensitive material can be saved;
+- users receive a review notice when a sensitive memory is saved;
+- the first relevant decline can trigger a one-time explanatory notice;
+- current mobile sensitive-save notices require a sufficiently current app version; an older unsupported app version does not silently save the sensitive item;
+- disabling sensitive memory removes sensitive items stored through that mechanism.
 
-**Class: A**
+## 4.20 Categories Anthropic publicly says memory will not save
 
-When sensitive memory is enabled:
-
-- the change is prospective, not retroactive;
-- Claude can save eligible sensitive material from future conversations;
-- the user receives a review notice when a sensitive memory is saved;
-- the first decline related to sensitive-memory settings can trigger a one-time explanatory notice;
-- current mobile sensitive-save notices require a sufficiently current app version; older unsupported app versions do not silently save the sensitive item;
-- disabling sensitive memory removes sensitive items stored under that mechanism.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 25. Categories Anthropic Says Consumer Memory Will Not Store
-
-**Class: A**
-
-Anthropic publicly identifies categories Claude will not save even if asked, including:
+**A.** Public never-save examples include:
 
 - government identification numbers;
 - financial account numbers;
 - criminal history;
 - immigration status.
 
-Anthropic also excludes content that violates applicable policies from memory behavior as described in its product materials.
+Applicable policy restrictions also constrain memory behavior.
 
-Primary sources:
+Sources:
 
 - https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
 - https://claude.com/blog/claudes-memory-works-everywhere-and-you-decide-whats-in-it
 
----
+## 4.21 Incognito is a hard normal-memory/history boundary
 
-# 26. Incognito Is a Hard Memory/History Boundary
+**A.** Incognito chats:
 
-**Class: A**
-
-Incognito chats:
-
-- do not read normal Claude memory;
-- do not create normal Claude memory;
+- do not read ordinary Claude memory;
+- do not create ordinary Claude memory;
 - are not saved in ordinary chat history;
-- are excluded from past-chat search;
+- are excluded from Past Chat Search;
 - are excluded from Monthly Recap;
 - are not used for model training under Anthropic's documented Incognito behavior.
 
-However, Incognito may still receive other personalization such as profile/custom styles/preferences.
+**A.** Incognito can still receive other personalization such as profile/custom styles/preferences.
 
 Therefore:
 
 ```text
-MEMORY
-   ≠
-ALL PERSONALIZATION
+memory ≠ all personalization
 ```
 
-Primary source:
+Source:
 
 - https://support.claude.com/en/articles/12260368-use-incognito-chats
 
----
+## 4.22 Incognito retention and organization visibility
 
-# 27. Incognito Retention and Organizational Visibility
+**A.** Incognito is not zero-retention:
 
-**Class: A**
+- default retention is approximately 30 days for safety;
+- Enterprise/custom organization policies can retain longer;
+- Team/Enterprise Incognito can appear in organization exports/Compliance API flows as documented;
+- Incognito runs outside Projects;
+- once closed, it is not simply saved/converted into a regular conversation under the current product model.
 
-Incognito is not zero-retention.
+## 4.23 Team/Enterprise governance
 
-- Default retention is approximately **30 days** for safety purposes.
-- Enterprise/custom organizational policies may require longer retention.
-- Team/Enterprise Incognito conversations can appear in organization data exports as documented.
-- Enterprise Compliance API/retention controls may apply.
-- Incognito currently operates outside Projects and is not simply convertible into an ordinary saved conversation after closure.
+**A.** In the new memory experience:
 
-Primary source:
-
-- https://support.claude.com/en/articles/12260368-use-incognito-chats
-
----
-
-# 28. Team and Enterprise Governance
-
-**Class: A**
-
-For Team/Enterprise:
-
-- organization-level generated memory is off by default in the new experience;
-- an Owner/Primary Owner enables memory availability;
+- organization-level generated memory is off by default;
+- an Owner/Primary Owner enables availability;
 - sensitive-memory permission is a separate organization-level control;
-- individual users manage their own generated memories after the organization enables the feature;
-- organization owners cannot inspect/edit an individual's memory through the memory UI;
+- individual users manage their own generated memories after enablement;
+- owners cannot inspect/edit an individual's memory through the memory UI;
 - disabling organization memory immediately and permanently deletes generated memory entries for users in that organization;
-- some organizations using HIPAA configurations, public-sector arrangements, or custom data-retention agreements do not currently have this memory feature.
+- the feature is unavailable for some HIPAA configurations, public-sector arrangements, and custom-retention organizations.
 
-Primary source:
+## 4.24 Team/Enterprise security/export/audit details
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 29. Team/Enterprise Security, Export, and Audit Details
-
-**Class: A**
-
-Additional documented enterprise behavior includes:
+**A.** Current documented behavior includes:
 
 - memory entries encrypted at rest;
-- ordinary organization retention/export rules apply;
-- Incognito may be included in organization exports despite being hidden from the user's ordinary history;
-- organization-level memory setting changes are available in audit logging;
-- normal conversation access logging applies;
-- individual member edits to personal memory topics are not documented as separate organization audit-log events.
+- organization retention/export rules apply;
+- Incognito may be included in organization exports despite not appearing in user-visible ordinary history;
+- organization-level memory setting changes can appear in audit logs;
+- ordinary conversation access logging applies;
+- individual member edits to personal Topics are not documented as separate organization audit events.
 
-Primary source:
+## 4.25 Remaining legacy Team/Enterprise behavior
 
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+**A — historical/migration only.** For the small legacy cohort, old behavior differs:
 
----
+- synthesis approximately every 24 hours;
+- standalone/non-project synthesis separate from Project memory;
+- no current cloud-Cowork shared-memory behavior;
+- deleting conversations changes what can enter the next synthesis;
+- direct legacy-summary edits can apply immediately;
+- organization-control defaults differ from the new experience.
 
-# 30. Legacy Team/Enterprise Behavior Must Not Be Confused With Current Memory
+These facts must not be generalized to modern topic-based memory.
 
-**Class: A — historical/migration behavior**
+## 4.26 Monthly Recap is memory-adjacent, not memory
 
-For the small remaining legacy cohort, Anthropic documents differences such as:
+**A.** Settings → Reflect → Monthly Recap is a derived reflection feature that requires memory to be enabled but is not the persistent memory store.
 
-- memory synthesis approximately every 24 hours;
-- standalone/non-project synthesis and separate project memory;
-- deleting conversations changes the material available to the next synthesis;
-- direct edits to the legacy memory summary can apply immediately rather than waiting for the next daily cycle;
-- organization control defaults differ from the new memory experience.
+Current documented availability is Free/Pro/Max on web/Desktop for viewing; supported mobile activity can contribute even when the recap page itself is not available on mobile. Team/Enterprise are not currently part of the consumer recap experience.
 
-These are retained for historical completeness only. They must not be generalized to the current individual-topic architecture.
-
-Primary source:
-
-- https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
----
-
-# 31. Monthly Recap Is Memory-Adjacent, Not the Memory Store
-
-**Class: A**
-
-Claude provides **Settings → Reflect → Monthly Recap**, a reflective analysis of recent Claude usage.
-
-It requires generated memory to be enabled but is a separate derived feature.
-
-Current documented availability includes Free, Pro, and Max on web/Desktop for viewing; supported mobile activity can still contribute to recap statistics even when the recap page itself is not available on mobile. Team/Enterprise are not currently part of the consumer recap experience.
-
-Primary source:
+Source:
 
 - https://support.claude.com/en/articles/15672559-see-your-monthly-recap
 
----
+## 4.27 Monthly Recap inputs/exclusions
 
-# 32. Monthly Recap Inputs and Exclusions
-
-**Class: A**
-
-Recap can surface:
+**A.** Recap can report:
 
 - opening summary;
-- total conversation counts;
+- conversation counts;
 - most active day;
 - peak hour;
 - daily activity chart;
 - topic distribution;
-- AI-fluency observations/skills such as Delegation, Description, Discernment, and Diligence.
+- AI-fluency observations such as Delegation, Description, Discernment, and Diligence.
 
-Recap excludes:
+**A. Excluded:** Incognito, Health integration chats, Cowork, Claude Code.
 
-- Incognito;
-- Health integration chats;
-- Cowork;
-- Claude Code.
+**A.** Raw connected Gmail/Google Drive content is not directly included in the recap dataset; Claude-authored summaries/comments that appeared in conversations can be reflected.
 
-Raw connected Gmail/Google Drive content is not directly included in the recap dataset; Claude-authored summaries or comments that appeared in conversations can be reflected.
+**A.** Sensitive/distress-related subjects are not used as recap-leading categories/count breakdowns as documented.
 
-Sensitive/distress-related topics are not used as recap-leading categories/count breakdowns as documented.
+**A.** Recap is generated/refreshed when the user visits Reflect rather than existing as a continuously visible memory record.
 
-Recap is generated when the user visits/refreshes Reflect rather than acting as a constantly visible memory object.
+## 4.28 Consumer semantic memory + episodic retrieval
 
-Primary source:
+**C terminology.** The current architecture is usefully modeled as:
 
-- https://support.claude.com/en/articles/15672559-see-your-monthly-recap
+- **semantic/adaptive memory:** durable compressed context (role, preferences, projects, people, decisions);
+- **episodic retrieval:** exact prior conversations recovered through Past Chat Search.
 
----
-
-# 33. Consumer Memory and Historical Search Form a Semantic/Episodic Pair
-
-**Class: C — terminology**
-
-Anthropic does not require these cognitive-science labels, but the architecture is usefully described as:
-
-### Semantic/adaptive memory
-
-Compressed durable context such as role, preferences, projects, recurring people, and decisions.
-
-### Episodic retrieval
-
-Search for the original prior conversation/episode when exact historical evidence is needed.
-
-This explains why Claude can sometimes recover highly specific old details without those details appearing as durable Topics.
+Anthropic does not require these cognitive-science terms; they are analytical labels.
 
 ---
 
-# 34. Implementation Evidence Boundary
+# 5. Consumer implementation evidence — captured Fable 5.1 / Opus 5
 
-Everything from this section through the captured-consumer internals section is **Class B unless explicitly stated otherwise**.
+Everything in this section is **Class B unless stated otherwise**.
 
-Primary implementation source:
+Primary capture source:
 
-- `elder-plinius/CL4R1T4S`, captured `ANTHROPIC/Claude-Fable-5.1.md`, commit `93b0ae6fb503db6642e58f9d6352db973a900cdc`.
+- https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/Claude-Fable-5.1.md
 
-A highly similar memory block also appears in that repository's `ANTHROPIC/OPUS-5.md`. Because both captures come through the same external repository/capture pipeline, this is **same-source corroboration**, not an independent Anthropic confirmation.
+Same-source corroboration:
 
-The captures are valuable evidence but are not Anthropic-authenticated product specifications. They can change without notice.
+- https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/OPUS-5.md
 
----
+Because both files come through the same external capture repository/pipeline, the second is **not** independent Anthropic confirmation.
 
-# 35. Captured Consumer `memory_filesystem`
+## 5.1 Model-facing memory filesystem
 
-**Class: B**
-
-The captured Fable 5.1 instructions describe a persistent model-facing component approximately named:
+The capture describes a persistent component approximately named:
 
 ```text
 <memory_filesystem>
@@ -898,17 +518,9 @@ memory_list
 memory_delete
 ```
 
-This strongly supports the conclusion that current consumer Claude is exposed to a **path-addressed memory abstraction**.
+This strongly suggests a path-addressed memory abstraction. It does not prove physical filesystem storage.
 
-It does not prove the physical backend is a filesystem.
-
----
-
-# 36. Captured Consumer File Taxonomy
-
-**Class: B**
-
-The capture describes an organization resembling:
+## 5.2 Apparent file taxonomy
 
 ```text
 /profile.md
@@ -918,212 +530,124 @@ The capture describes an organization resembling:
 /people/...
 ```
 
-Approximate semantics:
+Observed semantics:
 
 - `/profile.md`: stable identity/context;
 - `/preferences.md`: how Claude should interact/respond;
-- `/topics/`: recurring interests, routines, habits, broad recurring domains;
+- `/topics/`: recurring interests, habits, routines, broad recurring domains;
 - `/areas/`: ongoing projects, responsibilities, decisions, work domains;
-- `/people/`: persistent relationship/context for recurring people.
+- `/people/`: persistent context about recurring people/relationships.
 
-Exact paths are implementation evidence, not public contract.
+## 5.3 Exact captured profile-admission test
 
----
-
-# 37. Captured `/profile.md` Admission Rule
-
-**Class: B**
-
-The Fable/Opus capture gives a concrete profile-stability test roughly equivalent to:
+The capture uses a stability test roughly equivalent to:
 
 > Would this still be true in three months?
 
-It separates durable identity from temporary state. A role/team relationship can belong in profile; something tied to “this sprint,” a deadline, or “currently” normally belongs in `/areas/` or `/topics/` instead.
+Temporary/deadline/“currently” material is routed to `/areas/` or `/topics/` rather than stable profile identity.
 
 The capture also instructs Claude to keep `/profile.md` **under 300 words**.
 
-This 300-word limit is observed implementation evidence, not an Anthropic public product guarantee.
+That numeric target is B-level implementation evidence, not a public product contract.
 
----
+## 5.4 Sparse retrieval through `<memory_listing>`
 
-# 38. Captured Sparse Retrieval / `memory_listing`
-
-**Class: B**
-
-The capture describes a `<memory_listing>` block that exposes the current memory directory at a routing level.
-
-The listing includes information such as:
+The capture describes a compact `<memory_listing>` containing routing-level information such as:
 
 - file path;
 - one-line description;
 - aliases where applicable;
-- source metadata.
+- sources/provenance metadata.
 
-The description is explicitly a **routing hint**, not a substitute for reading the detailed memory. When the listing suggests a relevant file, Claude is instructed to open/read it before concluding that it does not know the information.
+The one-line description is a **routing hint, not a substitute for reading the file**. When the listing suggests relevance, Claude is instructed to read the detailed file before concluding it lacks the information.
 
-The apparent architecture is:
+Apparent design:
 
 ```text
-always/cheaply available
+cheap/always context
   profile
   preferences
-  compact memory listing
+  memory listing/index
 
 on demand
-  detailed topic/area/person memory files
+  detailed topic/area/person files
 ```
 
-This is highly consistent with Claude Code's officially documented index + lazy retrieval design.
+## 5.5 Captured frontmatter/schema
 
----
-
-# 39. Captured Memory Frontmatter / Metadata
-
-**Class: B**
-
-The capture shows memory documents using metadata concepts resembling:
+Observed concepts include:
 
 ```yaml
-name: <canonical-slug>
-description: <one-line routing description>
+name: canonical-slug
+description: one-line routing description
 sources:
   - chat
 aliases:
-  - <alternate subject name>
+  - alternate subject name
 ```
 
-Observed semantics include:
+Observed semantics:
 
-- `name` corresponds to a canonical subject identity/path stem;
-- `name` is expected to be unique across the memory set;
-- `description` is what the compact memory listing uses to decide whether to open the file;
-- `sources` records surfaces that have contributed to the memory;
-- `aliases` are particularly associated with `/areas/` and `/people/` to resolve alternate names.
+- canonical `name` corresponds to the path/subject identity;
+- `name` should be unique across the memory set;
+- `description` supports routing;
+- `sources` preserves contributing surfaces;
+- `aliases` are especially associated with `/areas/` and `/people/`.
 
-Exact schema is B-level evidence.
+## 5.6 Cross-memory links
 
----
+The capture uses `[[name]]`-style links between memory subjects. Canonical unique names act as link targets.
 
-# 40. Captured Cross-Memory Links
+**C analytical description:** the result resembles a **Markdown-shaped lightweight knowledge graph**.
 
-**Class: B/C**
+## 5.7 Entity resolution
 
-The capture supports `[[name]]`-style references between memory subjects. Canonical unique names provide link targets.
+Aliases are intended to prevent one subject from fragmenting across several memories, e.g. `David`, `Dave`, `David from Crystal Tile`.
 
-This makes the semantic structure resemble a lightweight graph:
+The capture says the **fact's domain determines the file**, not whichever file already exists/is open.
 
-```text
-MEMORY SUBJECT
- ├── canonical path/name
- ├── aliases
- ├── description
- ├── facts
- ├── provenance/source surfaces
- └── links to related memory subjects
-```
+## 5.8 Post-turn background memory pass
 
-“Markdown-shaped lightweight knowledge graph” is our architectural terminology, not Anthropic's.
-
----
-
-# 41. Captured Entity Resolution
-
-**Class: B**
-
-Aliases appear specifically intended to prevent fragmentation such as:
-
-```text
-David
-Dave
-David from Crystal Tile
-```
-
-becoming three conflicting memories when they refer to one subject.
-
-The captured rules emphasize routing a fact by the **fact's semantic domain**, not by whichever file happened to be open or already existed.
-
-Architectural lesson:
-
-> Long-term memory requires canonical entity resolution or the memory graph slowly fragments into duplicates.
-
-**Class for lesson: C**
-
----
-
-# 42. Captured Background Memory Pass
-
-**Class: B**
-
-The Fable 5.1 capture explicitly describes durable filing as occurring **automatically after each completed assistant turn** through a background memory pass that re-reads the finished exchange.
+The Fable 5.1 capture explicitly says durable filing occurs **automatically after each completed assistant turn** through a background pass that re-reads the finished exchange.
 
 Probable flow:
 
 ```text
-USER MESSAGE
-   ↓
-MAIN CLAUDE
-   ↓
-NORMAL RESPONSE
-   ↓
+user message
+  ↓
+foreground Claude answer
+  ↓
 turn completes
-   ↓
-BACKGROUND MEMORY PASS
-   ├── reread exchange
-   ├── determine durable facts
-   ├── choose semantic file
-   ├── read current memory state
-   ├── reconcile/correct
-   └── persist update
+  ↓
+background memory pass
+  ├─ reread exchange
+  ├─ decide durability
+  ├─ choose semantic subject/file
+  ├─ read existing state
+  ├─ reconcile/correct
+  └─ persist update
 ```
 
-Anthropic has not publicly identified the exact model, prompt, or service performing this pass.
+**U:** exact background model/service/prompt.
 
-**Background writer model: U**
+## 5.9 Explicit remember/update/forget uses a foreground path
 
----
+The capture instructs foreground Claude to directly perform explicit memory mutations rather than waiting for ordinary background filing.
 
-# 43. Explicit Remember/Update/Forget Uses an Apparent Foreground Path
+The background process then avoids reprocessing the same turn in a way that would recreate/undo an explicit deletion.
 
-**Class: B**
+## 5.10 Best-effort, not load-bearing
 
-When a user explicitly requests a memory mutation, the captured instructions tell foreground Claude to perform it directly rather than waiting for ordinary post-turn filing.
-
-The background mechanism is then intended not to reprocess the same exchange in a way that duplicates or reverses the explicit request.
-
-This prevents the obvious failure:
+The capture treats automatic memory I/O as best-effort: a memory maintenance failure should not derail the user's primary task.
 
 ```text
-User: Forget X.
-foreground: delete X
-background: sees X in transcript and recreates X
+canonical operational state = source systems
+adaptive memory             = helpful context
 ```
 
----
+## 5.11 Provenance/epistemic typing
 
-# 44. Captured Memory Is Best-Effort, Not Load-Bearing
-
-**Class: B/C**
-
-The consumer prompt treats automatic memory maintenance as best-effort. A memory I/O failure should not derail the user's primary task.
-
-```text
-AUTHORITATIVE STATE
-repo / database / calendar / email / documents
-
-ADAPTIVE MEMORY
-helpful durable context
-not the canonical operational state
-```
-
-This distinction is central to reliable agent design.
-
----
-
-# 45. Captured Epistemic/Provenance Typing
-
-**Class: B**
-
-The capture contains provenance concepts resembling:
+The capture includes concepts resembling:
 
 ```text
 [stated]
@@ -1131,186 +655,76 @@ The capture contains provenance concepts resembling:
 [inferred]
 ```
 
-The Chat-side captured rules are especially conservative about adding user memory: direct user-established facts are eligible; Claude's own guesses/recommendations are not silently converted into user truth.
+Chat-side rules are conservative about user memory: direct user-established facts are eligible; Claude's own guesses/recommendations are not silently promoted to autobiographical truth.
 
-Other surfaces may apparently contribute observed/inferred material, but the exact cross-surface semantics are not an official contract.
+## 5.12 Model advice, web/tool output, and hearsay are not automatically user memory
 
----
+A Claude recommendation is not a user fact merely because Claude generated it. A web/connector result is not automatically autobiographical memory. If the user explicitly confirms a decision/fact, that confirmation can become user-established state.
 
-# 46. Claude-Generated Advice Is Not Automatically User Memory
+## 5.13 Admission uses durability/repetition
 
-**Class: B**
+Stable facts can be admitted quickly. Fleeting execution state should stay out. Casual one-off tastes/hobbies may require recurrence or meaningful engagement before becoming worth retaining.
 
-Under the captured rules:
+**U:** exact scoring formula.
 
-```text
-Claude: Stripe looks like the best option.
-```
+## 5.14 Cross-surface provenance preservation
 
-is not itself a user memory.
+The capture includes `sources` metadata. Chat should preserve existing source values and add `chat` when it contributes rather than overwriting provenance.
 
-If the user later establishes:
+This aligns with official Chat ↔ cloud Cowork shared memory, but the exact metadata is still B-level.
 
-```text
-Yes, we're going with Stripe.
-```
+## 5.15 Optimistic concurrency
 
-that confirmation may become durable because it is now user-established.
+Captured mutation operations use an `if_version`-style precondition.
 
-Likewise, web results, connector results, and hearsay are not meant to become autobiographical facts merely because Claude encountered them.
-
-Architectural implication:
-
-> Do not silently convert model outputs or re-queryable external facts into durable user beliefs.
-
-**Class for implication: C**
-
----
-
-# 47. Captured Admission Uses Durability and Repetition
-
-**Class: B**
-
-The prompt indicates that stable facts can be admitted quickly, while fleeting execution state should remain outside long-term memory.
-
-A casual one-off taste/hobby does not necessarily deserve storage on first mention; repetition or meaningful engagement can make it more durable/relevant.
-
-This is more nuanced than “every statement becomes memory.”
-
-The exact scoring/admission model is unknown.
-
----
-
-# 48. “Remember the Pointer, Not the Stale Copy”
-
-**Class: A/C**
-
-Claude Code independently confirms a powerful Anthropic-wide pattern: its `reference` auto-memory type records **where authoritative information can be found** rather than copying dynamic values that can be re-queried.
+Protocol:
 
 ```text
-CAN THIS FACT BE RELIABLY RECONSTRUCTED?
-
-YES
-→ prefer authoritative source / pointer
-
-NO / expensive / user-specific
-→ candidate for durable memory
-```
-
-This principle also matches the captured consumer instruction not to turn external search/tool results into durable autobiographical truth.
-
-Primary official source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 49. Captured Cross-Surface Provenance
-
-**Class: B**
-
-The consumer capture includes `sources` metadata. When Chat updates a memory created by another participating surface, the rules indicate preserving existing source metadata and adding `chat` rather than destroying provenance.
-
-This aligns with the confirmed Chat ↔ cloud Cowork shared-memory product behavior.
-
-Exact metadata = B.  
-Shared Chat/cloud-Cowork behavior = A.
-
----
-
-# 50. Captured Optimistic Concurrency
-
-**Class: B**
-
-The captured memory-write tools use an `if_version`-like precondition.
-
-Observed intended protocol:
-
-```text
-read memory → receive current version
-       ↓
-perform mutation with if_version
-       ↓
-if another writer changed it:
-       conflict
-       ↓
-re-read latest state
+read current file/version
+  ↓
+mutate using if_version
+  ↓
+conflict if another writer changed it
+  ↓
+re-read latest
 merge/reconcile
 retry
 ```
 
-The capture also specifically instructs reading a file before delete/update so the current version is available.
+The capture explicitly instructs **read before update/delete** to obtain the current version.
 
-This is strongly corroborated by official Managed Agent Memory, which implements comparable optimistic concurrency with `content_sha256`.
-
----
-
-# 51. Captured Fine-Grained Deletion Semantics
-
-**Class: B**
+## 5.16 Fine-grained deletion
 
 The capture distinguishes:
 
 - deleting a whole subject/file;
-- deleting/replacing a specific line/fact;
-- normal correction;
+- removing/replacing one exact fact/line;
+- correction/supersession;
 - explicit forgetting.
 
-For a whole subject, the captured flow reads the file for version then uses delete. For a line, it can replace the exact line with an empty/new value.
+If a dependent fact existed solely because of a forgotten source fact, the captured rules say the dependent fact should also be removed.
 
-If a second fact existed **only because** of the forgotten fact, captured instructions say that dependent fact should be removed too.
+**C:** this approximates provenance-aware cascading deletion even though no formal dependency graph is publicly documented.
 
-This approximates provenance-aware cascading deletion even though no formal dependency graph is publicly documented.
+## 5.17 Correction is different from forgetting
 
----
+A correction may preserve chronology (`now Infrastructure; previously Search`). An explicit “forget that I ever worked on Search” should remove the historical fact instead of preserving it as chronology.
 
-# 52. Correction and Forgetting Are Semantically Different
+## 5.18 Capacity management
 
-**Class: B**
-
-A correction can preserve useful chronology:
-
-```text
-Works on Infrastructure; previously Search.
-```
-
-An explicit privacy-style request such as “forget that I ever worked on Search” should remove the old fact rather than preserve it as historical detail.
-
-This is an important distinction between:
-
-```text
-supersession / chronology
-```
-
-and:
-
-```text
-true forgetting / erasure semantics
-```
-
----
-
-# 53. Captured Memory File Capacity Management
-
-**Class: B**
-
-The captured consumer tool provides capacity/size information for memory files. When a file becomes crowded, Claude is instructed to:
+The captured memory tool provides capacity/size information. Under pressure Claude is told to:
 
 - consolidate overlapping facts;
-- remove stale low-value detail;
-- split overly broad topics;
+- prune stale low-value detail;
+- split overly broad subjects;
 - summarize repetitive history;
-- preserve references to external canonical systems rather than copying dynamic state.
+- remember pointers to authoritative external systems instead of copying changing data.
 
-**Exact consumer per-file limit: U**
+**U:** exact consumer per-file/account limits.
 
----
+## 5.19 Broader captured sensitive-data policy
 
-# 54. Captured Sensitive-Data Rules Are Broader Than the Public Contract
-
-**Class: B**
-
-The Fable/Opus capture contains a broader internal exclusion/protection scheme than the public consumer-memory help page. It includes or discusses categories such as:
+The captured internal rules are broader/more nuanced than the public help page and include or discuss categories such as:
 
 - race/color/ethnicity/caste;
 - religion;
@@ -1320,402 +734,220 @@ The Fable/Opus capture contains a broader internal exclusion/protection scheme t
 - disability/serious illness;
 - union membership;
 - socioeconomic/financial details;
-- medical conditions, diagnoses, labs/genetics, mental-health/therapy/addiction information;
+- medical conditions/diagnoses/labs/genetics/mental-health/therapy/addiction details;
 - criminal/victimization history;
 - sexual-history information;
 - restrictions on inferring health information.
 
-The captured rules contain nuanced exceptions and distinctions. Because this comes from an unauthenticated prompt capture, it must **not** be treated as a stable public product guarantee or used to override the official help center.
+Because this is prompt-capture evidence, it must not be treated as a stable public product guarantee or used to override current official documentation.
+
+## 5.20 Stored memory is untrusted context
+
+The capture warns against allowing stored memory to override higher-priority/current explicit instructions. Official Managed Agent docs independently warn that writable memory can persist prompt injection.
+
+**C conclusion:** persistent memory is a security boundary.
 
 ---
 
-# 55. Consumer Memory Is Treated as Untrusted Context
-
-**Class: A/B/C**
-
-The captured consumer prompt warns against allowing stored memory to override higher-priority behavior or the user's current explicit request.
-
-Official Managed Agent documentation independently warns that prompt injection can poison writable memory and persist into future sessions.
-
-Therefore:
-
-> **Persistent memory is a security boundary.**
-
-Stored state should be treated as potentially stale, mistaken, or malicious—not equivalent to system policy.
-
----
-
-# 56. Claude Code Has a Separate Memory Architecture
-
-**Class: A**
-
-Claude Code treats each new session as fresh context and supports two major persistence mechanisms:
-
-```text
-CLAUDE.md / rules
-human-authored instructions
-
-Auto Memory
-Claude-authored learned context
-```
-
-Both are context for the model, not deterministic enforcement.
+# 6. Claude Code — explicit instructions (`CLAUDE.md` and rules)
 
 Primary source:
 
 - https://code.claude.com/docs/en/memory
 
----
+## 6.1 Two complementary persistence mechanisms
 
-# 57. `CLAUDE.md` Instruction Scopes
+**A.** Each Claude Code session starts with fresh context. Persistent continuity comes from:
 
-**Class: A**
+- `CLAUDE.md` / rules: written by the human;
+- auto-memory: written by Claude.
 
-Current Claude Code supports persistent instruction files at multiple scopes, including:
+Both are model context, **not enforced configuration**. Anthropic explicitly recommends `PreToolUse` hooks for deterministic blocking.
 
-### Managed policy
+## 6.2 `CLAUDE.md` scopes
 
-Examples include OS-level managed `CLAUDE.md` locations such as:
+**A. Managed policy examples:**
 
 - macOS: `/Library/Application Support/ClaudeCode/CLAUDE.md`
 - Linux/WSL: `/etc/claude-code/CLAUDE.md`
 - Windows: `C:\Program Files\ClaudeCode\CLAUDE.md`
 
-### User
+**A. User:** `~/.claude/CLAUDE.md`
 
-`~/.claude/CLAUDE.md`
+**A. Project:** `./CLAUDE.md` or `./.claude/CLAUDE.md`
 
-### Project
+**A. Local project:** `./CLAUDE.local.md`
 
-`./CLAUDE.md` or `./.claude/CLAUDE.md`
+Nested/path-specific instructions can load when relevant files/subtrees are accessed.
 
-### Local project
+## 6.3 Loading behavior and precedence
 
-`./CLAUDE.local.md`
+**A.** Applicable instruction files are combined/concatenated rather than acting as a simple “last value wins” config system. Ancestor files load at startup; nested/path-scoped sources can lazy-load later. At the same directory level, local project guidance applies after ordinary project guidance.
 
-Nested/path-specific instructions can also be loaded when relevant files/subtrees are accessed.
+**A.** Ordinary HTML comments are stripped before context injection except comments inside code blocks; reading the file explicitly with tools still shows comments.
 
-Primary source:
+## 6.4 Size guidance
 
-- https://code.claude.com/docs/en/memory
+**A.** Anthropic recommends targeting **under 200 lines** per `CLAUDE.md` for adherence/context economy.
 
----
+**A.** Claude Code loads a `CLAUDE.md` file up to approximately **4 MiB** and skips a larger file.
 
-# 58. `CLAUDE.md` Loading and Precedence
+## 6.5 `/init`
 
-**Class: A**
+**A.** `/init` can create a starting project `CLAUDE.md`; if one exists it suggests improvements rather than blindly overwriting it.
 
-Claude Code loads applicable ancestor instruction files from the project hierarchy. Relevant files are concatenated rather than behaving as a simple “last file wins” configuration override.
+**A.** With `CLAUDE_CODE_NEW_INIT=1`, supported versions use a more interactive setup flow that can propose `CLAUDE.md`, skills, and hooks, explore with a subagent, ask follow-up questions, and present a reviewable proposal.
 
-Nested instruction files/path-scoped rules can be discovered/reloaded on demand when Claude accesses matching files.
+## 6.6 Imports with `@path`
 
-A local instruction file in a directory is applied after the ordinary project instruction file at the same level.
+**A.** `CLAUDE.md` supports relative and absolute `@path` imports.
 
-Claude strips ordinary HTML comments from instruction text before injection except where comments occur inside code blocks, according to current docs.
+Current documented details include:
 
-Primary source:
+- relative paths resolve from the containing instruction file;
+- recursive imports are bounded to **four hops**;
+- import syntax inside code spans/fenced code is ignored;
+- external-project imports can require first-use trust approval;
+- `CLAUDE.local.md` can serve as private/worktree-local guidance when excluded from version control;
+- user-scope trust/security rules differ from untrusted project imports, with additional Cowork/desktop restrictions documented for external/symlinked content.
 
-- https://code.claude.com/docs/en/memory
+## 6.7 `AGENTS.md` is not the native filename
 
----
+**A.** Claude Code natively reads `CLAUDE.md`, not `AGENTS.md`. Users can import/symlink/copy other rule files, and newer initialization/import workflows can migrate supported agent-rule formats.
 
-# 59. `CLAUDE.md` Size Guidance and Verification
+## 6.8 `.claude/rules/`
 
-**Class: A**
-
-Anthropic recommends keeping `CLAUDE.md` concise, with approximately **under 200 lines** as a practical target.
-
-Claude Code skips a `CLAUDE.md` file larger than approximately **4 MiB**.
-
-`/context` can be used to verify which instruction/memory sources are actually loaded into the current context.
-
-`/init` can create an initial project instruction file and can suggest improvements if one already exists; newer Claude Code versions also have evolving initialization/import flows.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 60. `CLAUDE.md` Imports
-
-**Class: A**
-
-Claude Code supports `@path` imports in instruction files.
-
-Current documented behavior includes:
-
-- relative and absolute imports;
-- relative paths resolved from the containing instruction file;
-- recursive imports with a bounded depth (currently up to four hops);
-- import syntax ignored when it appears inside code spans/fenced code;
-- external-project imports can require trust/approval;
-- user-scope imports are trusted according to product/security rules;
-- `CLAUDE.local.md` can serve as a worktree-local/private instruction file when excluded from version control.
-
-Current Claude Code also documents migration/import support for other agent-rule files; exact version requirements can change.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 61. Claude Code Does Not Natively Treat `AGENTS.md` as `CLAUDE.md`
-
-**Class: A**
-
-Current docs state Claude Code reads `CLAUDE.md`, not `AGENTS.md`, as its native persistent instruction filename.
-
-Users can explicitly import/symlink/copy other rule files where appropriate, and newer `/init`/import workflows can help migrate existing agent instructions.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 62. `.claude/rules/` Provides Modular and Path-Scoped Instructions
-
-**Class: A**
-
-Claude Code supports modular rule files under `.claude/rules/` and corresponding user-level rules.
+**A.** Modular rules can live under `.claude/rules/` (and corresponding user-level rules).
 
 Rules can be:
 
-- unscoped and loaded at project startup;
-- path-scoped through frontmatter/glob patterns and loaded when relevant files are touched;
-- organized recursively.
+- unscoped/startup-loaded;
+- path-scoped with YAML frontmatter/globs;
+- recursive;
+- symlinked, with circular symlinks handled.
 
-User rules and project rules can coexist. The exact pattern-expansion and total file-size safety limits are implementation details documented in the current Claude Code memory page and may evolve.
+**A. Path-pattern safety limits:** a rule's `paths` list shares a brace-expansion budget of **1,000 expanded patterns and 4 MiB**. Patterns without braces do not count. A pattern that would exceed the budget remains unexpanded/literal.
 
-Primary source:
+**A historical bug notes:** before v2.1.217 excessive brace groups could stall/crash startup; before v2.1.207 one invalid bracket expression could break Read evaluation rather than simply matching nothing.
 
-- https://code.claude.com/docs/en/memory
+## 6.9 Additional directories
 
----
+**A.** `--add-dir` gives filesystem access but does **not** automatically load that directory's instructions.
 
-# 63. Extra Directories Do Not Automatically Import Their Instructions
-
-**Class: A**
-
-Adding a directory with `--add-dir` does not automatically mean Claude should load that directory's `CLAUDE.md`/rules. Current Claude Code provides an explicit environment setting to opt into additional-directory instruction loading.
-
-This prevents “filesystem access” from being silently equated with “instruction authority.”
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 64. Managed Instructions and Exclusion Controls
-
-**Class: A**
-
-Claude Code supports managed organization policy/instruction mechanisms in addition to ordinary user/project files.
-
-Current settings can exclude selected `CLAUDE.md` paths/globs from normal loading, while managed policy cannot simply be removed by a lower-trust project file.
-
-This reinforces a hierarchy between organization policy and repository-authored context.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 65. `CLAUDE.md` Is Context, Not Enforcement
-
-**Class: A/C**
-
-Anthropic explicitly distinguishes behavioral guidance from deterministic controls.
+To opt in:
 
 ```text
-Claude should KNOW X
-→ auto-memory / reference context
-
-Claude should generally DO X
-→ CLAUDE.md / rules / skills
-
-Claude MUST NOT perform operation X
-→ permissions / deterministic settings / hooks
-
-Did the result actually satisfy X?
-→ tests / verification
+CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1
 ```
 
-For deterministic blocking around tool calls, Anthropic points to hooks such as `PreToolUse` rather than relying only on prose instructions.
+This can load `CLAUDE.md`, `.claude/CLAUDE.md`, `.claude/rules/*.md`, and `CLAUDE.local.md` from added directories, with setting-source rules affecting local files.
+
+## 6.10 Managed organization instructions and exclusions
+
+**A.** Managed policy instructions exist separately from ordinary project/user files. Current settings can exclude selected ordinary `CLAUDE.md` paths/globs, while managed-policy instruction sources cannot simply be removed by lower-trust project settings.
+
+## 6.11 Context, not deterministic law
+
+**A.** Claude Code documentation explicitly says instruction files are context, not enforced configuration. For deterministic behavior:
+
+```text
+behavioral guidance      → CLAUDE.md / rules
+hard tool/action policy  → settings / permissions / hooks
+system-level additions   → --append-system-prompt
+verification             → tests / inspection
+```
+
+## 6.12 Diagnostics
+
+**A.** `/context` shows which instruction/memory sources actually loaded into the active context.
+
+**A.** The `InstructionsLoaded` hook can log exactly which instruction files loaded, when, and why.
+
+## 6.13 `/doctor` trimming
+
+**A.** Current `/doctor` can propose trimming checked-in `CLAUDE.md` by removing code-derivable directory/dependency/architecture material while preserving pitfalls, rationale, and conventions that differ from defaults. Current docs identify this trim check as requiring **v2.1.206+**.
+
+## 6.14 Compaction
+
+**A.** Project-root `CLAUDE.md` survives `/compact` by being reread/reinjected. Nested/path-scoped rules reload when matching files are subsequently accessed.
+
+```text
+compaction ≠ persistent instruction deletion
+```
 
 ---
 
-# 66. `CLAUDE.md` Is Delivered as Model Context, Not a Hard System Law
-
-**Class: A**
-
-Current Claude Code documentation explains that project instructions are delivered as contextual user-level content after the core system prompt rather than gaining absolute system-prompt enforcement semantics.
-
-If multiple instructions conflict, the model may not deterministically resolve them the way a configuration engine would.
-
-For stronger system-level prompting, Claude Code exposes separate mechanisms such as system-prompt append/managed policy, and for hard enforcement, hooks/settings remain the preferred layer.
+# 7. Claude Code auto-memory
 
 Primary source:
 
 - https://code.claude.com/docs/en/memory
 
----
+## 7.1 Official memory types
 
-# 67. Auto Memory: Official Types
+**A.** Current types:
 
-**Class: A**
+- `user` — role, expertise, working preferences;
+- `feedback` — corrections and user-confirmed approaches;
+- `project` — ongoing work/decisions/deadlines not reliably recoverable from repo/git;
+- `reference` — where authoritative external information can be found.
 
-Claude Code auto-memory uses four current types:
+## 7.2 Auto-memory avoids reconstructible facts
 
-### `user`
+**A.** Claude Code explicitly avoids wasting auto-memory on architecture/file paths/debug conclusions recoverable from the codebase or information already present in `CLAUDE.md`.
 
-Role, expertise, and working preferences.
+> **Persist what would otherwise be lost or expensive to reconstruct.**
 
-### `feedback`
+## 7.3 Enabled by default; disable controls
 
-Corrections and approaches the user has confirmed.
-
-### `project`
-
-Ongoing work, deadlines, and decisions that are not reliably recoverable from repository/git state.
-
-### `reference`
-
-Where authoritative external information can be found.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 68. Auto Memory Avoids Reconstructible Technical Facts
-
-**Class: A**
-
-Claude Code is explicitly told not to waste auto-memory on information it can recover from:
-
-- the repository architecture;
-- file paths;
-- reproducible debugging state;
-- information already present in `CLAUDE.md`.
-
-This is the clearest official Anthropic statement of the principle:
-
-> **Store what would otherwise be lost or expensive to reconstruct.**
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 69. Auto Memory Is On by Default and Can Be Disabled
-
-**Class: A**
-
-Current Claude Code auto-memory is on by default in supported versions.
+**A.** Auto-memory is on by default in supported versions.
 
 Documented controls include:
 
-- `/memory` UI/toggle;
-- `autoMemoryEnabled` settings;
+- `/memory` toggle;
+- `autoMemoryEnabled` in settings;
 - project/user settings as supported;
-- environment variable `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`.
+- `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`.
 
-The modern auto-memory feature requires a sufficiently recent Claude Code version; Anthropic's current docs identify the initial support line as **2.1.59+**, with later subfeatures requiring newer versions.
+The modern feature was introduced in the **2.1.59+** line; later subfeatures require newer versions.
 
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 70. Claude Code Auto-Memory Storage and Scope
-
-**Class: A**
-
-Default local storage resembles:
+## 7.4 Default storage and scope
 
 ```text
 ~/.claude/projects/<project>/memory/
-
 ├── MEMORY.md
 ├── user_role.md
 ├── feedback_testing.md
-├── project_deadline.md
 └── ...
 ```
 
-Scope behavior:
+**A.** A git repository defines the project identity; worktrees/subdirectories share the same auto-memory directory. Outside git, the project root is used.
 
-- a Git repository defines the main auto-memory project identity;
-- worktrees/subdirectories of the same repo share the project memory directory;
-- outside Git, the project root defines the scope;
-- auto-memory is machine-local by default;
-- it does not automatically synchronize between different computers/cloud environments.
+**A.** Auto-memory is machine-local by default and is not automatically synchronized across machines/cloud environments.
 
-Primary source:
+## 7.5 `CLAUDE_CODE_PROJECT_DIR_NAME`
 
-- https://code.claude.com/docs/en/memory
+**A.** In **v2.1.234+**, setting `CLAUDE_CODE_PROJECT_DIR_NAME` beside `CLAUDE_CONFIG_DIR` can intentionally force the project-directory identity under the config directory, allowing environments launched with that config to share one auto-memory directory even across repositories.
 
----
+## 7.6 `autoMemoryDirectory`
 
-# 71. Auto-Memory Project Directory Overrides
+**A. Current correction.** `autoMemoryDirectory` can be read from **user, project, local, policy, or `--settings`** scopes.
 
-**Class: A**
+- value must be absolute or `~/`-relative;
+- project/local values are subject to the same workspace-trust rule used for hooks/settings.
 
-Current Claude Code supports advanced ways to control project-memory directory identity, including environment/config directory mechanisms in newer versions.
+This corrects stale claims that project/local values are categorically rejected.
 
-`CLAUDE_CODE_PROJECT_DIR_NAME` combined with Claude config location can be used in supported releases to intentionally share/identify a memory directory across environments.
+## 7.7 `MEMORY.md` is the startup routing index
 
-This is advanced configuration and version-sensitive.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 72. Correction: `autoMemoryDirectory` Is Settings-Scope Aware
-
-**Class: A**
-
-Version 1.0 of this document incorrectly stated that project/local configuration of `autoMemoryDirectory` was categorically refused.
-
-Current Claude Code documentation says `autoMemoryDirectory` can be resolved through supported settings scopes—including user/project/local/policy/explicit settings—with workspace-trust rules controlling whether project/local configuration is honored safely.
-
-The configured path must satisfy the current path/trust requirements (for example, absolute or home-relative forms as documented).
-
-This correction replaces the stale v1.0 statement.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 73. `MEMORY.md` Is the Auto-Memory Index
-
-**Class: A**
-
-Claude Code uses `MEMORY.md` as a lightweight index/routing file and keeps detail in additional topic files.
+**A.** Auto-memory uses:
 
 ```text
-MEMORY.md
-small routing index
-    │
-    ├── user_role.md
-    ├── feedback_testing.md
-    ├── project_x.md
-    └── reference_y.md
+MEMORY.md          # concise index, one line per memory
+specific topic files
 ```
 
-At conversation startup Claude automatically loads only the first:
+At startup, Claude Code loads only the first:
 
 ```text
 200 lines
@@ -1724,308 +956,140 @@ OR
 whichever comes first
 ```
 
-Detailed topic files are read lazily when useful.
+Topic files such as `user_role.md`/`feedback_testing.md` are **not** startup-loaded; Claude opens them on demand.
 
-Primary source:
+## 7.8 Index overflow behavior
 
-- https://code.claude.com/docs/en/memory
+**A.** The 200-line/25-KB limit applies to `MEMORY.md`, not the whole memory directory.
 
----
+- near the limit, Claude gets a reminder to compact/reorganize the index;
+- an over-limit write still succeeds;
+- Claude Code then returns an error/request to rewrite the index;
+- content past the threshold is dropped from the next startup load;
+- topic files can remain larger because they are read selectively.
 
-# 74. Auto-Memory Index Overflow Behavior
+## 7.9 Visible save/recall activity
 
-**Class: A**
-
-The 200-line/25-KB limit applies to the startup `MEMORY.md` index, not to the whole memory directory.
-
-Current docs describe behavior such as:
-
-- near the limit, Claude receives reminders to reorganize/trim the index;
-- writes can still occur even if the index is over the startup limit;
-- content beyond the startup limit is not loaded in the next session;
-- detailed topic files can remain larger because they are selectively opened rather than all injected at startup.
-
-This is deliberate hierarchical context management, not merely storage limitation.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 75. Auto-Memory UI Shows Saving and Recall Activity
-
-**Class: A**
-
-Claude Code exposes visible indicators such as saved/recalled memory counts or memory-writing/retrieval activity. This gives the user evidence that auto-memory is being written or read rather than making all memory behavior invisible.
-
-The exact wording can vary by version/UI.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 76. Auto-Memory Frontmatter Can Track Modification Time
-
-**Class: A**
-
-In current Claude Code releases, when a memory file already uses YAML frontmatter, Claude Code can add/update a `modified` timestamp in ISO-8601 form.
-
-A file without frontmatter is not automatically forced to gain frontmatter solely for this timestamp.
-
-This behavior requires a newer Claude Code build (documented around the 2.1.214+ line).
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 77. Transcript Cleanup Does Not Delete Auto Memory
-
-**Class: A**
-
-Claude Code can prune older session transcripts according to transcript-cleanup settings such as `cleanupPeriodDays`.
-
-Auto-memory files are excluded from ordinary transcript cleanup and remain until Claude or the user changes/removes them.
+**A.** Claude Code shows indicators such as:
 
 ```text
-session transcript lifecycle
-        ≠
-auto-memory lifecycle
+Saved 2 memories
+Recalled 2 memories
 ```
 
-Primary source:
+when actively writing/reading auto-memory.
 
-- https://code.claude.com/docs/en/memory
+## 7.10 `modified` frontmatter timestamp
 
----
+**A.** In **v2.1.214+**, when Claude writes a memory file that already has YAML frontmatter, Claude Code records/updates a `modified` ISO-8601 timestamp.
 
-# 78. `/memory` and `/context` Serve Different Inspection Purposes
+**A.** It does not add frontmatter merely to create this field if the file has none.
 
-**Class: A**
+## 7.11 Transcript cleanup is separate
 
-`/memory` surfaces memory/instruction locations and auto-memory controls. It can open/create the relevant memory locations where supported.
+**A.** `cleanupPeriodDays` transcript pruning excludes auto-memory files. `MEMORY.md` and topic files survive until Claude/user edits or deletes them.
 
-`/context` reports what is actually loaded into the active context.
+## 7.12 `/memory` vs `/context`
 
-This distinction matters:
+**A.** `/memory` lists user/project instruction and memory locations, including some nonexistent files that can be created, toggles auto-memory, and can open the memory directory/file in an editor.
+
+**A.** `/context` tells you what actually loaded into the current model context.
 
 ```text
-file exists / configured
-      ≠
-file is currently loaded
+file exists/configured ≠ file loaded
 ```
 
-Primary source:
+**A historical UI note:** before v2.1.216, `/memory` could wait for a GUI editor to close before returning.
 
-- https://code.claude.com/docs/en/memory
+## 7.13 Natural-language routing
 
----
-
-# 79. Explicit User Wording Routes to Different Persistence Layers
-
-**Class: A/C**
-
-Claude Code documentation distinguishes intents such as:
+**A/C.** Current docs distinguish intents like:
 
 ```text
-“Remember X”
-→ auto-memory candidate
-
-“Add X to CLAUDE.md”
-→ explicit human-authored project instructions
+“Remember X”          → auto-memory
+“Add X to CLAUDE.md”  → explicit human-authored instructions
 ```
 
-This is a useful product boundary between adaptive learned state and explicit durable policy/guidance.
+This is a useful separation between adaptive learned state and explicit policy/guidance.
 
 ---
 
-# 80. Claude Code Compaction Does Not Delete Persistent Memory
-
-**Class: A**
-
-After context compaction, persistent disk-backed instruction/memory sources can be re-read or re-injected.
-
-Current documented behavior includes:
-
-- root/project `CLAUDE.md` context being reintroduced;
-- unscoped rules being available again;
-- auto-memory being available again;
-- path-scoped/nested instructions reloading when matching files/subtrees are accessed.
-
-Therefore:
-
-> **Context compaction is not memory deletion.**
-
-Primary sources:
-
-- https://code.claude.com/docs/en/memory
-- https://code.claude.com/docs/en/context-window
-
----
-
-# 81. `InstructionsLoaded` and Other Diagnostics Improve Auditability
-
-**Class: A**
-
-Current Claude Code documentation exposes diagnostic mechanisms—including instruction-loading hooks/events and `/context`—that help determine which persistent instruction sources were loaded, when, and why.
-
-This is important because model behavior should not be inferred solely from the existence of a file on disk.
-
-Primary source:
-
-- https://code.claude.com/docs/en/memory
-
----
-
-# 82. Claude Code Subagents Can Have Independent Persistent Memory
-
-**Class: A**
-
-A subagent definition can request memory scope:
-
-```text
-memory: user
-memory: project
-memory: local
-```
-
-Typical locations are documented as patterns such as:
-
-```text
-user:    ~/.claude/agent-memory/<agent-name>/
-project: .claude/agent-memory/<agent-name>/
-local:   .claude/agent-memory-local/<agent-name>/
-```
-
-Each subagent can build specialized persistent knowledge rather than sharing one universal memory pool.
+# 8. Claude Code subagent persistent memory
 
 Primary source:
 
 - https://code.claude.com/docs/en/sub-agents
 
----
+## 8.1 Scopes and locations
 
-# 83. Subagent Memory Obeys Global Auto-Memory Enablement
+**A.** A subagent can request:
 
-**Class: A**
+| Scope | Location | Intended use |
+|---|---|---|
+| `user` | `~/.claude/agent-memory/<agent-name>/` | cross-project agent learning |
+| `project` | `.claude/agent-memory/<agent-name>/` | project-specific/shareable |
+| `local` | `.claude/agent-memory-local/<agent-name>/` | project-specific/private |
 
-If Claude Code auto-memory is globally disabled by setting/environment, a subagent `memory` declaration does not magically re-enable memory. The agent does not receive the normal persistent-memory read/write behavior in that disabled state.
+## 8.2 Global enablement still controls it
 
-Primary source:
+**A.** If auto-memory is disabled using `autoMemoryEnabled` or `CLAUDE_CODE_DISABLE_AUTO_MEMORY`, a subagent `memory:` declaration has no effect; the agent launches without ordinary memory instructions/tool access for that feature.
 
-- https://code.claude.com/docs/en/sub-agents
+## 8.3 Startup behavior
 
----
+**A.** When enabled, subagent memory gets memory instructions and its own `MEMORY.md` routing context following the same general startup-index pattern, with file tools needed to manage that memory available as documented.
 
-# 84. Subagent Startup Uses the Same Index Principle
+## 8.4 Main-agent auto-memory is not automatically inherited
 
-**Class: A**
+**A.** An ordinary non-fork subagent does **not** automatically receive the main conversation's auto-memory directory/content.
 
-When subagent memory is enabled, its system/context setup includes memory instructions plus the initial portion of its own `MEMORY.md`, subject to the same general first-200-lines/25-KB startup pattern.
+**A.** A **forked** subagent inherits parent conversational/system context as part of fork semantics, which is different from sharing the same persistent auto-memory directory.
 
-Read/Write/Edit tools needed for its memory workflow can be made available automatically as documented.
+## 8.5 Resumption ≠ persistent memory
 
-Primary source:
-
-- https://code.claude.com/docs/en/sub-agents
-
----
-
-# 85. Main-Agent Auto Memory Is Not Automatically Inherited by Ordinary Subagents
-
-**Class: A**
-
-A non-fork subagent does not automatically receive the parent conversation's auto-memory directory/content merely because the parent has memory.
-
-A **forked** subagent inherits parent context as part of the fork semantics, which is different from sharing the same persistent auto-memory store.
-
-Agent-specific persistent memory remains separately scoped.
-
-Primary source:
-
-- https://code.claude.com/docs/en/sub-agents
+**A/C.** Subagent session/conversation resumption can preserve conversational history. That remains conceptually distinct from its user/project/local persistent memory files.
 
 ---
 
-# 86. Subagent Resumption and Persistent Memory Are Different
-
-**Class: A/C**
-
-Claude Code can resume some subagent conversations by agent/session identity, preserving conversational history. That is distinct from the subagent's explicit persistent memory directory.
-
-```text
-resumed conversation history
-        ≠
-persistent agent memory files
-```
-
-This is the same general distinction seen throughout Claude: history and durable memory are different layers.
-
----
-
-# 87. Claude API Memory Tool Is Client-Side
-
-**Class: A**
-
-Anthropic provides a developer-facing Memory Tool that gives Claude a filesystem-style interface under a logical prefix such as:
-
-```text
-/memories/
-```
-
-The tool is **client-side**: Anthropic does not require one specific storage backend. The developer implements persistence.
-
-Possible mappings include:
-
-- local filesystem;
-- Postgres;
-- S3/object storage;
-- encrypted store;
-- custom database/service.
+# 9. Claude API Memory Tool
 
 Primary source:
 
 - https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
 
----
+## 9.1 Client-side persistent abstraction
 
-# 88. API Memory Tool Configuration
+**A.** Anthropic exposes a logical `/memories` filesystem-style tool, but the developer implements storage. Possible backends include filesystem, database, object storage, encrypted service, etc.
 
-**Class: A**
+A model-facing file abstraction does **not** prove a physical filesystem backend.
 
-Current documentation uses a tool declaration with type/version approximately:
+## 9.2 Tool declaration and model support
 
-```text
-memory_20250818
+**A.** Current documentation uses approximately:
+
+```json
+{"type":"memory_20250818","name":"memory"}
 ```
 
-and tool name:
+No custom input schema is supplied by the caller.
 
-```text
-memory
-```
+**A.** The feature is documented for supported Claude 4+ models.
 
-The memory tool is available to supported Claude 4+ models according to current docs.
+## 9.3 SDK helpers
 
-SDK helper abstractions exist in several Anthropic SDKs, while some languages require implementing the tool loop more directly.
+**A.** Current SDK documentation includes helpers such as:
 
-Exact SDK helper names and beta namespaces can evolve and should be checked against current SDK docs when implementing.
+- Python/C#: `BetaAbstractMemoryTool`;
+- TypeScript: `betaMemoryTool`;
+- Java: `BetaMemoryToolHandler`;
+- Python/TypeScript local filesystem: `BetaLocalFilesystemMemoryTool`;
+- Go/Ruby: implement the loop directly under current docs;
+- PHP: `BetaRunnableTool`.
 
-Primary source:
+SDK names are version-sensitive and should be verified before implementation.
 
-- https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
+## 9.4 Command set
 
----
-
-# 89. API Memory Tool Commands
-
-**Class: A**
-
-The model-facing command set includes operations such as:
+**A.** Model-facing commands include:
 
 ```text
 view
@@ -2036,490 +1100,442 @@ delete
 rename
 ```
 
-`view` can inspect files/directories and selected ranges. Other commands create or mutate the developer-owned store.
+## 9.5 `view` details
 
-The developer is responsible for enforcing the documented contract and safely mapping paths to the underlying backend.
+**A.** Reference behavior includes:
 
-Primary source:
+- directory listing up to a bounded depth (the reference helper lists up to two levels);
+- hidden paths/`node_modules` excluded by the reference helper;
+- text output line-numbered from 1;
+- line numbers formatted in a fixed-width field with tab separator;
+- files with more than **999,999 lines** should return a line-limit error;
+- `view_range` supports selected ranges and `-1` semantics as documented;
+- the tool description supports image views for `.jpg`, `.jpeg`, `.png`;
+- long text views are truncated at approximately **16,000 characters**, prompting ranged follow-up reads.
 
-- https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
+## 9.6 `create`
 
----
+**A.** Reference helper behavior errors if the file already exists. The tool description itself says “creates or overwrites,” so Anthropic explicitly treats overwrite-vs-error as an implementation choice; callers should not infer one universal backend semantic from the helper.
 
-# 90. API Memory Uses Just-in-Time Retrieval
+## 9.7 `str_replace`
 
-**Class: A**
+**A.** `old_str` must resolve uniquely; missing/duplicate matches produce errors. `new_str` is optional; omission deletes the matched text.
 
-Anthropic presents persistent memory as a context-engineering primitive: store durable information externally and retrieve only what is useful for the present request.
+## 9.8 `insert`
+
+**A.** Inserts after a specified line; `0` means the beginning. Valid bounds are tied to current file length as documented.
+
+## 9.9 `delete`
+
+**A.** Can delete files/directories recursively under the memory root but should not permit deletion of the logical `/memories` root itself.
+
+## 9.10 `rename`
+
+**A.** Reference behavior does not overwrite an existing destination and does not rename the logical memory root.
+
+## 9.11 Memory-first protocol
+
+**A.** Anthropic's built-in system/tool guidance tells Claude to inspect the memory directory before work so relevant durable state can be recovered after interruption/context reset.
+
+The intended long-running workflow is roughly:
 
 ```text
-large durable store
-      ↓
-selective read
-      ↓
-small relevant active context
+start
+  ↓
+inspect durable memory
+  ↓
+work one bounded objective
+  ↓
+record progress/state
+  ↓
+verify
+  ↓
+future session resumes from durable state
 ```
 
-This reduces pressure on the context window and lets state survive session boundaries.
+## 9.12 Error handling
 
-Primary sources:
+**A.** Memory-tool implementation errors should be returned through tool results with an error indicator (`is_error`) so Claude can recover rather than silently assume a mutation succeeded.
 
-- https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
-- https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools
+## 9.13 Just-in-time retrieval
 
----
+**A.** The Memory Tool is a context-engineering primitive: keep durable state external and read only what the current request needs.
 
-# 91. API Memory and Compaction Solve Different Problems
+## 9.14 Memory + compaction
 
-**Class: A/C**
-
-Anthropic recommends combining persistent memory with context editing/server-side compaction for long-running agents.
+**A/C.** Anthropic recommends combining persistent memory with context editing/server-side compaction:
 
 ```text
-ACTIVE CONTEXT
-temporary working cognition
-
-COMPACTION SUMMARY
-compressed current-run continuity
-
-PERSISTENT MEMORY
-cross-session durable context
-
-AUTHORITATIVE EXTERNAL SYSTEMS
-canonical ground truth
+active context       = temporary working cognition
+compaction summary   = compressed current-run continuity
+persistent memory    = cross-session durable state
+source systems       = canonical reality
 ```
 
-Persistent memory is specifically useful because it survives compaction and session boundaries.
+Persistent memory survives context reset/compaction because it exists outside the active window.
 
----
+## 9.15 Security requirements
 
-# 92. API Memory Security Requirements
+**A.** Anthropic recommends:
 
-**Class: A**
-
-Anthropic recommends defensive implementation controls including:
-
-- strictly confining paths to the memory prefix;
-- preventing path traversal and encoded traversal variants;
-- file-size caps;
+- canonicalizing paths;
+- restricting operations to the memory root;
+- rejecting `../`, `..\`, and encoded traversal variants;
+- file-size limits;
 - paging large reads/listings;
 - sensitive-data validation;
-- expiration/removal of stale unused memory;
-- appropriate encryption/storage controls for the application's risk profile.
+- appropriate encryption/access control;
+- expiration/removal of stale memory.
 
-These recommendations reinforce that a memory filesystem is a privileged durable-state interface.
+## 9.16 Expiration is explicitly recommended
 
-Primary source:
-
-- https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
-
----
-
-# 93. API Memory Expiration Is an Explicit Design Recommendation
-
-**Class: A/C**
-
-Anthropic explicitly recommends periodically removing memories that have not been accessed for a long time in suitable implementations.
-
-Architectural lesson:
+**A/C.** Anthropic recommends periodically removing old/unaccessed memory where appropriate.
 
 > **Forgetting/garbage collection is a system-health feature, not only a privacy action.**
 
-Primary source:
-
-- https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
-
 ---
 
-# 94. Managed Agents Use Persistent Memory Stores
-
-**Class: A**
-
-Managed Agents provide workspace-scoped **Memory Stores**, collections of text documents that can be attached to agent sessions.
-
-The agent receives memory-store metadata/instructions and accesses attached stores through its filesystem/tool environment.
+# 10. Managed Agent Memory Stores
 
 Primary source:
 
 - https://platform.claude.com/docs/en/managed-agents/memory
 
----
+## 10.1 Fresh sessions + durable stores
 
-# 95. Managed Memory Limits — Current Correct Values
+**A.** Managed Agent sessions start with fresh context. Memory Stores provide durable preferences, project conventions, past mistakes, and domain context across sessions.
 
-**Class: A**
+## 10.2 Beta headers
 
-Current documented limits are:
-
-### Per memory document
-
-**100 KB**, approximately **25K tokens**.
-
-### Per Memory Store
-
-Up to **10,000 memories**.
-
-### Memory Stores attached to one session
-
-Up to **8 stores**.
-
-Version 1.0 of this document incorrectly listed **2,000 memories per store**. The current official limit is **10,000**, and v1.1 corrects that stale value.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/memory
-
----
-
-# 96. Store Attachments Are Chosen at Session Creation
-
-**Class: A**
-
-Memory Stores are attached when a Managed Agent session is created. Current docs do not treat store attachment as a freely mutable property of an already-running session.
-
-Each attachment can carry:
-
-- access mode;
-- store description/name context;
-- optional instructions (currently bounded to about 4096 characters).
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/memory
-
----
-
-# 97. Managed Memory Access Modes
-
-**Class: A**
-
-A Memory Store can be attached as:
+**A.** Current Managed Agents requests use:
 
 ```text
-read_write
+managed-agents-2026-04-01
 ```
 
-or:
+while Memory Store endpoints use:
 
 ```text
+agent-memory-2026-07-22
+```
+
+**A.** Do **not** combine both on a Memory Store request; current docs say that returns HTTP 400. Session endpoints—including attaching a Memory Store—still use the Managed Agents header. The list-memories endpoint behaves consistently under either accepted path as documented.
+
+## 10.3 Store model
+
+**A.** A Memory Store is a workspace-scoped collection of text documents. It has a `memstore_...` identifier plus human-readable name/description. The description is supplied to the agent as context about the store.
+
+## 10.4 Current hard limits
+
+**A.** Current official limits:
+
+- **100 kB (~25K tokens) per memory document**;
+- **10,000 memories per Memory Store**;
+- **8 Memory Stores per session**;
+- per-attachment instructions capped at **4,096 characters**.
+
+The previous v1.0 “2,000 memories/store” figure was stale and is superseded.
+
+## 10.5 Attachments are fixed at session creation
+
+**A.** Stores are attached in `resources[]` when the session is created. They cannot be freely added/removed from a running session under current docs.
+
+Self-hosted environments accept Memory Store resources under the documented resource model.
+
+## 10.6 Access modes
+
+**A.** Attachments support:
+
+```text
+read_write   # default
 read_only
 ```
 
-`read_write` is the normal default where not otherwise constrained.
+Use read-only for reference/shared material when mutation is not needed.
 
-This supports architectures such as:
+## 10.7 Mount paths
 
-```text
-Agent
- ├── company standards      READ ONLY
- ├── shared references      READ ONLY
- ├── user preferences       READ/WRITE
- └── project memory         READ/WRITE
-```
+**A.** Attached stores appear under `/mnt/memory/` using a sanitized display-name slug, but the exact path is returned as `mount_path` in the session resource. **Use the returned path rather than constructing it.**
 
-Read-only attachments are a major security/correctness control.
+**A.** The `/mnt/memory` parent is read-only/controlled; supported writes must target an actual writable store mount.
 
----
+**A.** A note describing each mount—display name, mount path, access mode, description, attachment instructions—is automatically added to the agent system prompt.
 
-# 98. Managed Memory Mount Paths
+## 10.8 Managed cloud vs self-hosted storage
 
-**Class: A**
+**A.** Anthropic-managed sandboxes expose the store as durable mounted storage.
 
-Memory Stores appear under the agent memory mount hierarchy, commonly under:
+**A.** Self-hosted sandboxes do **not** receive a live remote mount. The environment worker downloads a local copy and synchronizes it with the durable store.
 
-```text
-/mnt/memory/...
-```
+## 10.9 Self-hosted synchronization
 
-The store API/session response returns the actual `mount_path`. Anthropic recommends using the returned mount path rather than constructing one from the display name yourself.
+**A.** Current docs describe:
 
-The `/mnt/memory` parent is controlled; writes must target an actual attached writable store rather than arbitrary sibling locations.
+- reconciliation after tool calls;
+- at most one sync per interval, **15 seconds by default**;
+- final sync when the session ends normally;
+- another self-hosted session sees a change only after the relevant workers sync;
+- writes outside real store directories under `/mnt/memory/` are not durable store state;
+- read-only store `write`/`edit` mutations are refused and not uploaded.
 
-Primary source:
+Therefore self-hosted memory is an **eventually synchronized local copy**, not an instantly coherent distributed filesystem.
 
-- https://platform.claude.com/docs/en/managed-agents/memory
+## 10.10 Event stream
 
----
+**A.** Agent reads/writes to memory mounts appear as ordinary `agent.tool_use` / `agent.tool_result` events for the underlying file tools.
 
-# 99. Managed vs Self-Hosted Memory Mounting
+## 10.11 Listing semantics
 
-**Class: A**
+**A.** Memory listing is returned in a stable server-defined order.
 
-For Anthropic-managed sandboxes, attached Memory Stores behave like durable mounted storage within the agent environment.
+`path_prefix`:
 
-For **self-hosted** sandboxes, the implementation is not a live remote mount. The worker downloads/synchronizes a local copy of Memory Store content and periodically synchronizes mutations back to the store.
+- must end with `/`;
+- is path-segment aware.
 
-This is important when reasoning about consistency and concurrency.
+`depth`:
 
-Primary source:
+- omitted or `0` = whole subtree;
+- `1` = immediate children;
+- other values currently return 400.
 
-- https://platform.claude.com/docs/en/managed-agents/memory
+## 10.12 Basic vs full projections
 
----
+**A.** Current API reference supports `basic`/`full` views. Retrieve operations default to full content; list/create/update can default to basic metadata. Listing with `view=full` currently caps the page `limit` at 20.
 
-# 100. Self-Hosted Memory Synchronization Semantics
+## 10.13 Read/create/update/delete
 
-**Class: A**
+**A.** Individual memory operations include:
 
-Current Managed Agent documentation describes self-hosted synchronization behavior approximately as:
+- retrieve full content;
+- create at path;
+- update content;
+- rename/move path;
+- update content and path together;
+- delete.
 
-- synchronize after relevant tool activity;
-- rate-limit/background synchronization to roughly once per **15 seconds** by default;
-- perform a final synchronization when the session ends normally;
-- another self-hosted worker may not see changes until both sides have synchronized;
-- writes made outside recognized Memory Store mounts do not become durable store state;
-- read-only mounts refuse mutation through supported write/edit paths.
+**A.** Create does not silently overwrite an existing memory path; use update for an existing memory.
 
-This means self-hosted Memory Stores are **eventually synchronized local copies**, not instantly coherent shared filesystems.
+**A.** At the 10,000-memory store limit, new-path creates/agent writes fail while existing memories remain readable/editable.
 
-Primary source:
+## 10.14 Optimistic concurrency
 
-- https://platform.claude.com/docs/en/managed-agents/memory
-
----
-
-# 101. Managed Memory Listing Semantics
-
-**Class: A**
-
-The Memory Store API supports listing with path-prefix/depth controls. Current docs define segment-aware path-prefix behavior and depth semantics for retrieving whole subtrees versus immediate children.
-
-Ordering is server-defined/stable for the API rather than something the model should infer from filesystem naming alone.
-
-Exact API parameters should be checked against current platform docs during implementation.
-
----
-
-# 102. Managed Memory Create/Update/Delete Semantics
-
-**Class: A**
-
-Memory Store operations support:
-
-- creating a new memory path;
-- retrieving a memory;
-- updating content;
-- renaming/moving a path;
-- updating path and content together;
-- deleting a memory.
-
-Create does not silently overwrite an existing path.
-
-At the store limit, creating new memory paths fails while reads/updates to existing memories remain possible under current docs.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/memory
-
----
-
-# 103. Managed Memory Optimistic Concurrency
-
-**Class: A**
-
-Managed Agent Memory supports optimistic concurrency with a `content_sha256` precondition.
+**A.** `content_sha256` can be supplied as an update precondition.
 
 ```text
-read memory + hash A
-       ↓
-another writer updates it
-       ↓
-write expecting hash A
-       ↓
-precondition conflict
-       ↓
-re-read
+read content + hash A
+  ↓
+concurrent writer changes memory
+  ↓
+update expecting A
+  ↓
+409 precondition failure
+  ↓
+re-read latest
 merge
 retry
 ```
 
-This prevents silent last-writer-wins clobbering when multiple agents/tools share durable state.
+**A.** Current reference adds a useful idempotency nuance: if the precondition is stale but stored content/path already exactly matches the requested final state, the server can return 200 instead of 409.
 
-Primary source:
+## 10.15 Every mutation creates immutable version history
 
-- https://platform.claude.com/docs/en/managed-agents/memory
+**A.** Every memory mutation creates a `memver_...` version record.
 
----
+Versions support audit of:
 
-# 104. Every Managed Memory Mutation Creates Version History
-
-**Class: A**
-
-Managed Memory mutations create immutable version records (`memver_...`-style identifiers).
-
-Version history can record:
-
-- operation/change;
+- operation;
 - actor;
 - timestamp;
-- historical content state.
+- historical content.
 
-Actors can include agent sessions, API keys, human Console users, and service accounts according to the Managed Agent version/audit model.
+Actors can include agent sessions, API keys, Console users, and service accounts in the documented model.
 
-Primary sources:
+## 10.16 Version retention
 
-- https://platform.claude.com/docs/en/managed-agents/memory
-- https://platform.claude.com/docs/en/api/http/beta/memory_stores/memory_versions
+**A.** Versions are store-level audit records and survive deletion of the live memory while retained.
 
----
+Current documented retention:
 
-# 105. Version History Survives Live Memory Deletion
+- versions are retained for **30 days after they are written**;
+- recent versions of a live memory are kept regardless of age;
+- infrequently changed live memories can therefore retain history beyond 30 days;
+- older history beyond guarantees should be exported if long-term audit is required.
 
-**Class: A**
+## 10.17 No dedicated restore endpoint
 
-Deleting the current memory object does **not automatically remove its immutable version records**.
+**A.** To roll back, retrieve the desired retained historical version and write its content back with update (or recreate if the live memory was deleted and the version is still retained).
 
-This creates an audit/history layer separate from the live memory object.
+## 10.18 Redaction
 
-Recent versions are retained under Anthropic's documented retention guarantees, commonly around a 30-day historical window, while infrequently changed memory may retain older live-relevant history longer under the documented model.
+**A.** Historical-version redaction removes content while preserving the audit record of who/what/when.
 
-Primary source:
+**A.** The current head of a live memory cannot be redacted directly; write a new head or delete the live memory first, then redact the old historical version.
 
-- https://platform.claude.com/docs/en/managed-agents/memory
+## 10.19 Store lifecycle
 
----
+**A.** Store operations include create/retrieve/update/list/archive/delete.
 
-# 106. Redaction Preserves the Audit Event
+**A.** Archived stores are excluded from ordinary lists unless requested.
 
-**Class: A**
+**A.** Archiving:
 
-Managed Agent version history supports redacting sensitive historical content while preserving the version/audit record that a change occurred.
+- makes a store read-only;
+- prevents attachment to new sessions;
+- is **one-way under current docs; there is no unarchive**.
 
-Redaction is therefore different from deleting the audit trail itself.
+**A.** Deleting a store permanently removes the store with all its memories and version history.
 
-The current live/head content has separate handling: historical-version redaction is not a substitute for changing/deleting the current memory state.
+## 10.20 Security: persistent prompt injection
 
-Primary sources:
+**A.** Anthropic explicitly warns that untrusted prompt/web/tool content can cause an agent with write access to persist malicious instructions, which future sessions may then read as memory.
 
-- https://platform.claude.com/docs/en/managed-agents/memory
-- https://platform.claude.com/docs/en/api/http/beta/memory_stores/memory_versions
-
----
-
-# 107. There Is No Magical One-Click Version Restore Contract
-
-**Class: A**
-
-Managed Agent APIs expose historical content/version records, but recovery is conceptually performed by reading the desired historical content and writing it back as new current state rather than rewinding the entire store through an opaque hidden rollback operation.
-
-For long-term audit requirements beyond Anthropic's retention window, export/version archiving should be handled explicitly.
-
----
-
-# 108. Memory Store Lifecycle: Archive and Delete
-
-**Class: A**
-
-Managed Memory Stores can be managed independently of their memories.
-
-Current docs distinguish archiving from deleting:
-
-- archived stores are excluded from normal active listings/attachments as documented and are effectively frozen for new session use;
-- archiving is not the same as deleting the store's data;
-- deleting a store permanently removes the store and its contained memories/version history according to current API semantics.
-
-Archive behavior is deliberately not equivalent to a reversible active-state toggle in every current workflow; check the current API before assuming unarchive support.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/memory
-
----
-
-# 109. Managed Agent Memory Is a Prompt-Injection Persistence Boundary
-
-**Class: A**
-
-Anthropic explicitly warns:
+Recommended pattern:
 
 ```text
-untrusted input
-   ↓
-prompt injection
-   ↓
-agent with writable memory
-   ↓
-malicious persistent state
-   ↓
-future session reads it
+trusted/learning state       → writable
+shared reference/standards   → read-only where possible
+untrusted transient content  → do not blindly persist
 ```
 
-Recommended architecture:
+## 10.21 Best-practice store architecture
 
-- writable stores only where learning is necessary;
-- read-only stores for reference/standards where possible;
-- strong source trust boundaries;
-- avoid letting arbitrary untrusted content become durable instructions.
+**A/C.** Anthropic recommends focused stores rather than one global dump. A useful pattern is:
 
-Persistent memory extends the blast radius of a one-turn prompt injection into future sessions.
+- per-user writable memory;
+- shared read-only reference memory;
+- project-scoped memory;
+- new writable store after an old store grows too large, optionally keeping the old one read-only;
+- prune/delete stale memory or run Dreams before capacity becomes a problem.
 
 ---
 
-# 110. Managed Agent Memory Store API Uses Separate Beta/Feature Headers
+# 11. Dreams — current consolidated source of truth
 
-**Class: A**
-
-Current Managed Agent and Memory Store APIs use versioned feature headers. The Managed Agents session API and the Memory Store endpoints can require different beta identifiers; they should not be blindly combined on every request.
-
-Examples in current docs include Managed Agents and Agent Memory feature-date identifiers such as:
-
-```text
-managed-agents-2026-04-01
-agent-memory-2026-07-22
-```
-
-These identifiers are API-version details and may change. Always verify against current docs before implementation.
-
----
-
-# 111. Dreams Are a Separate Memory-Consolidation System
-
-**Class: A**
-
-Managed Agents provide a research-preview capability called **Dreams**.
-
-Anthropic explicitly frames Dreams as a response to long-lived memory stores accumulating:
-
-- duplicates;
-- contradictions;
-- stale facts;
-- fragmented organization.
-
-Primary source:
+Primary overview:
 
 - https://platform.claude.com/docs/en/managed-agents/dreams
 
----
+Current API reference:
 
-# 112. Dream Inputs and Outputs
+- https://platform.claude.com/docs/en/api/http/beta/dreams/create
+- https://platform.claude.com/docs/en/api/typescript/beta/dreams
 
-**Class: A**
+## 11.1 Research preview and API volatility
 
-A Dream accepts:
+**A.** Dreams are a research-preview capability and can require access approval.
 
-```text
-one existing Memory Store
-+
-1–100 historical Managed Agent sessions
-```
-
-and produces:
+**A.** Dream endpoints use:
 
 ```text
-A NEW Memory Store
+dreaming-2026-04-21
 ```
 
-The input Memory Store is **not modified**.
+The Managed Agents beta header alone does not grant Dream endpoint access. Examples can send both where needed.
 
-The output can then be reviewed, used for future sessions, or discarded.
+**A.** The API reference explicitly says Dreams request/response shapes are volatile in research preview and may change without the deprecation guarantees of GA endpoints.
 
----
+## 11.2 Why Dreams exist
 
-# 113. Dreams Are Asynchronous
+**A.** Anthropic says incremental agent memory accumulates:
 
-**Class: A**
+- duplicates;
+- contradictions;
+- stale entries;
+- fragmented organization.
 
-Dream processing is asynchronous and has lifecycle states such as:
+Dreams let Claude perform a broader consolidation pass over accumulated memory plus historical sessions.
+
+## 11.3 Inputs
+
+**A.** A Dream uses:
+
+- one input Memory Store;
+- **1–100** historical Managed Agent sessions.
+
+If only sessions exist, create an empty Memory Store first and use it as the memory-store input.
+
+## 11.4 Default output behavior: `create_new`
+
+**A.** The overview page describes the default behavior:
+
+```text
+input Memory Store
++ sessions
+  ↓
+clone input into NEW output store
+  ↓
+write consolidated memory to output
+```
+
+With default:
+
+```json
+{"type":"create_new"}
+```
+
+the input store is **not mutated**.
+
+The output-store ID appears in `outputs[]` after the pipeline reaches the relevant stage; a running Dream can briefly have an empty `outputs[]`.
+
+## 11.5 Current API also supports `update_existing`
+
+**A — critical current reconciliation.** The newer/current API reference exposes:
+
+```json
+{
+  "type": "update_existing",
+  "memory_store_id": "..."
+}
+```
+
+In the current EAP, the target must be the Dream job's own input Memory Store, so the Dream **consolidates that store in place**.
+
+Therefore the correct current statement is:
+
+```text
+DEFAULT create_new
+  → input not mutated; new output store
+
+OPTIONAL update_existing (EAP)
+  → input store is also destination; consolidation occurs in place
+```
+
+This supersedes the v1.1 categorical claim that a Dream can never mutate its input.
+
+**A.** Current API reference also documents a target-store-held conflict if another in-place Dream is still pending/running or final writes are still landing; the target must no longer be held before retrying.
+
+## 11.6 Model configuration
+
+**A.** `model` can be supplied as a model ID string or a config object including:
+
+```text
+id
+speed: standard | fast
+```
+
+Not every model supports `fast`; invalid model/speed combinations fail at create time, and fast mode uses premium pricing where supported.
+
+Current research-preview supported models include:
+
+- `claude-opus-5`;
+- `claude-fable-5`;
+- `claude-opus-4-8`;
+- `claude-opus-4-7`;
+- `claude-sonnet-5`;
+- `claude-sonnet-4-6`.
+
+This list is preview-state and may change.
+
+## 11.7 Optional instructions
+
+**A.** Dream instructions are optional and currently limited to **1–4096 characters**.
+
+They steer high-level synthesis: what to emphasize, preserve, merge/drop, and how to organize output. They are not a precision line-editing interface; targeted edits belong in the Memory Store API.
+
+## 11.8 Asynchronous lifecycle
+
+**A.** Dream statuses:
 
 ```text
 pending
@@ -2529,590 +1545,277 @@ failed
 canceled
 ```
 
-An output Memory Store may exist before the dream has finished populating it.
+Dream objects include inputs, outputs, model config, instructions, processing `session_id`, timestamps, usage, and error detail.
 
-Failed/canceled dreams can leave a partial output store rather than automatically deleting every produced artifact.
+## 11.9 Processing session
 
-Primary source:
+**A.** The underlying processing session can be streamed/observed. The Dream's processing session is archived rather than deleted at terminal state, preserving the transcript for later inspection.
 
-- https://platform.claude.com/docs/en/managed-agents/dreams
+## 11.10 Failed/canceled output
 
----
+**A.** With `create_new`, failed/canceled Dreams can leave a partially populated output store. Anthropic does not automatically delete that store; inspect or delete/archive it explicitly.
 
-# 114. Dreams Preserve Inputs and Historical Sessions
+## 11.11 Input availability is a real dependency
 
-**Class: A**
+**A.** Deleting/archiving an input Memory Store or deleting an input session while a Dream is pending/running can cause failure such as:
 
-Dreaming does not mutate or delete the input Memory Store or source sessions.
+```text
+input_memory_store_unavailable
+input_session_unavailable
+```
 
-The underlying processing session can remain archived rather than being treated as disposable invisible state.
+Current API also documents other Dream errors such as timeout/internal errors, organization-store-limit errors, and oversized input-store errors.
 
-This makes Dreaming suitable for reviewable consolidation rather than destructive in-place rewriting.
+## 11.12 Usage/billing
 
----
+**A.** Dream resources expose cumulative usage across pipeline stages including input/output/cache token counts.
 
-# 115. Dream Instructions Are High-Level Consolidation Guidance
+**A.** Billing uses ordinary model token pricing for the selected model/speed and scales roughly with input store/session size and pipeline work.
 
-**Class: A**
+## 11.13 Archiving/canceling the Dream is separate from output-store lifecycle
 
-Dream creation can include optional instructions (currently bounded around 4096 characters) that guide consolidation.
+**A.** Cancel/archive operations apply to the Dream job/resource. They do not automatically mean “delete the output Memory Store.” Output store lifecycle is managed through Memory Store operations.
 
-These are meant for high-level synthesis/organization goals, not as a precision line-editor for an existing store. For targeted deterministic edits, use Memory Store APIs directly.
+## 11.14 Two-speed memory architecture
 
----
-
-# 116. Dreams Have Model Constraints
-
-**Class: A**
-
-Dreams support a defined set of Claude models rather than arbitrary models. Current documentation includes supported models from the Fable/Opus/Sonnet families, and that set can change.
-
-Because model support is a fast-moving implementation detail, the current Dreams page should be treated as authoritative at execution time.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/dreams
-
----
-
-# 117. Dream Input Availability Is Required Throughout the Run
-
-**Class: A**
-
-If an input Memory Store or required source session becomes unavailable (for example through deletion/archive in a way the Dream cannot access) while Dream processing is running, the Dream can fail with an input-unavailable error.
-
-This means consolidation has real dependency/lifecycle constraints.
-
----
-
-# 118. Dream Cancellation and Archiving
-
-**Class: A**
-
-Dreams can be canceled according to their lifecycle state. Completed/failed/canceled records can be archived under the documented API lifecycle.
-
-Archiving the Dream record is distinct from deleting its output Memory Store.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/dreams
-
----
-
-# 119. Dream Billing and Scale
-
-**Class: A**
-
-Dreams are billed using ordinary model token pricing for the selected model. Cost grows roughly with the amount/length of input memory and source sessions.
-
-Documented hard inputs include:
-
-- maximum **100 sessions** per Dream;
-- optional instruction-size limit;
-- supported model list;
-- organization/store capacity constraints.
-
-Primary source:
-
-- https://platform.claude.com/docs/en/managed-agents/dreams
-
----
-
-# 120. Dreams Create a Two-Speed Memory Architecture
-
-**Class: A/C**
-
-Anthropic now publicly exposes both:
+**A/C.** Anthropic now publicly exposes both:
 
 ```text
 FAST LOOP
-conversation/session
-   ↓
-incremental memory update
+session → incremental memory writes
 ```
 
 and:
 
 ```text
 SLOW LOOP
-many sessions + accumulated memory
-   ↓
+memory + many sessions
+  ↓
 Dream
-   ↓
-deduplicate
-reconcile
-compress
-reorganize
-generalize
-   ↓
-clean new memory store
+  ↓
+deduplicate / reconcile / reorganize / generalize
 ```
 
-Architectural lesson:
-
-> **Persistent memory requires consolidation, not merely accumulation.**
+With default `create_new`, consolidation is reviewable/non-destructive. With current EAP `update_existing`, consolidation can be in-place.
 
 ---
 
-# 121. Cross-Product Design Principle: Externalize Durable State
+# 12. Cross-product architectural principles
 
-**Class: A/C**
+## 12.1 Externalize durable state
 
-Consumer Claude, Claude Code, API Memory, and Managed Agents all separate model cognition from persistent storage.
+**A/C.** Consumer Claude, Claude Code, API Memory, and Managed Agents all separate persistent state from the model's active context window.
 
-```text
-context window = temporary cognition
-external store = durable state
-```
+## 12.2 Keep active context sparse
 
-This is the most fundamental commonality across Anthropic memory systems.
+**A/C.** Claude Code explicitly uses a small startup index + lazy topic reads. API Memory is explicitly JIT. Consumer implementation evidence strongly suggests a similar compact listing + detailed file reads.
 
----
+## 12.3 Source of truth ≠ memory
 
-# 122. Cross-Product Design Principle: Keep Active Context Sparse
+**A/C.** Repositories, databases, email, calendars, documents, APIs, and live systems should remain authoritative. Memory should preserve user-specific durable residue and pointers to those systems rather than stale copies.
 
-**Class: A/C**
+## 12.4 Preserve provenance
 
-Claude Code explicitly uses a small startup index plus on-demand detail. API Memory is explicitly designed for JIT retrieval. Consumer implementation evidence strongly suggests a similar memory listing + file read pattern.
+**A/B/C.** Consumer capture distinguishes stated/observed/inferred provenance; Managed Memory records actors/versions; Claude Code separates feedback/project/reference types.
 
-Thus Anthropic repeatedly favors:
+## 12.5 Scope memory
 
-```text
-small routing layer
-+
-selective detail retrieval
-```
-
-over loading the entire durable store into every prompt.
-
----
-
-# 123. Cross-Product Design Principle: Truth and Memory Are Different
-
-**Class: A/C**
-
-Repositories, databases, documents, email, calendars, APIs, and other connected systems should remain authoritative for their own state.
-
-Memory should generally preserve:
-
-- user-specific preferences;
-- corrections;
-- decisions;
-- context difficult to reconstruct;
-- pointers to canonical systems.
-
-It should not become a stale shadow database of re-queryable reality.
-
----
-
-# 124. Cross-Product Design Principle: Preserve Provenance
-
-**Class: A/B/C**
-
-Consumer captured memory distinguishes user-stated vs observed/inferred provenance. Managed Memory has actors/version history. Claude Code distinguishes user feedback from project/reference memories.
-
-Therefore a mature memory system should know **why it believes something**, not only store the proposition.
-
----
-
-# 125. Cross-Product Design Principle: Scope Memory
-
-**Class: A/C**
-
-Anthropic uses multiple independent scope boundaries:
+**A/C.** Scopes exist at multiple levels:
 
 - non-project vs Project consumer memory;
-- project-specific chat search;
-- user/project/local Claude Code/subagent memory;
+- project-scoped Past Chat Search;
+- Claude Code user/project/local/subagent memory;
 - workspace Memory Stores;
-- per-session Memory Store attachments;
+- per-session store attachments;
 - read-only vs read-write access.
 
-Long-term memory is not assumed to be globally visible to every agent/surface.
+## 12.6 Make durable state editable/auditable
 
----
+**A/C.** Consumer Topics are editable; Claude Code memory is plain Markdown; API memory is developer-owned; Managed Memory has immutable versions/redaction.
 
-# 126. Cross-Product Design Principle: Human Editability and Auditability
+## 12.7 Concurrency matters
 
-**Class: A/C**
+**A/B/C.** Consumer capture uses `if_version`; Managed Memory uses `content_sha256`; Dreams `update_existing` adds target-store holding/conflict concerns.
 
-Consumer Topics are editable. Claude Code memory is plain files. API Memory is developer-controlled. Managed Memory adds immutable versions and redaction.
+## 12.8 Memory is a security boundary
 
-Persistent model beliefs need inspection and correction proportional to their consequence.
+**A/C.** Writable durable state can turn transient prompt injection into persistent compromise. Use trust boundaries, read-only stores, constrained paths, provenance, and explicit instruction authority.
 
----
+## 12.9 Forgetting/consolidation are necessary
 
-# 127. Cross-Product Design Principle: Concurrency Matters
+**A/C.** API Memory recommends expiration; captured consumer memory includes pruning/capacity consolidation; Managed Agents expose Dreams.
 
-**Class: A/B/C**
-
-Consumer captured writes use `if_version` evidence; Managed Memory officially uses `content_sha256` preconditions.
-
-Once multiple surfaces/agents can write a shared durable store, memory requires ordinary distributed-state correctness mechanisms.
-
----
-
-# 128. Cross-Product Design Principle: Memory Is a Security Boundary
-
-**Class: A/C**
-
-Writable memory can turn transient prompt injection into persistent compromise.
-
-Therefore robust systems need:
-
-- source trust;
-- read-only reference stores;
-- path validation;
-- constrained write capability;
-- provenance;
-- review/version history where important;
-- explicit instruction-authority separation.
-
----
-
-# 129. Cross-Product Design Principle: Forget and Consolidate
-
-**Class: A/C**
-
-Anthropic recommends memory expiration in the API Memory Tool and provides Dreams for consolidation. Consumer captured memory also includes size-based consolidation/pruning behavior.
-
-A good memory system is not append-only by default.
-
-It must manage:
-
-- redundancy;
-- staleness;
-- contradiction;
-- low-value information;
-- privacy erasure;
-- capacity pressure.
-
----
-
-# 130. Memory Is Not Instructions, and Instructions Are Not Enforcement
-
-**Class: A/C**
-
-A reliable Claude harness should distinguish:
+## 12.10 Memory is not instruction; instruction is not enforcement
 
 ```text
 SOURCE OF TRUTH
-what is actually true
+  what is actually true
 
 MEMORY
-what durable context Claude should know
+  durable context Claude should know
 
 INSTRUCTIONS / CLAUDE.md / RULES
-how Claude should generally behave
+  how Claude should generally behave
 
 SKILLS / PROCEDURES
-how Claude should perform recurring work
+  how recurring work should be performed
 
 HOOKS / PERMISSIONS / POLICY
-what must/must not happen deterministically
+  deterministic constraints
 
 TESTS / OBSERVATION
-whether the real outcome is correct
+  proof the real outcome is correct
 ```
 
-Using memory as deterministic policy enforcement is an architectural mistake.
+---
+
+# 13. Complete failure taxonomy
+
+A serious Claude-like memory architecture must handle at least:
+
+1. **Capture failure** — useful durable information never admitted.
+2. **Over-capture** — transient/noisy detail becomes persistent.
+3. **Provenance failure** — model/tool/inference content promoted to user truth.
+4. **Entity duplication** — one subject becomes several memories.
+5. **Misrouting** — fact stored under wrong semantic subject/domain.
+6. **Staleness** — old state stays active after change.
+7. **Contradiction** — incompatible states coexist unresolved.
+8. **Retrieval failure** — right memory exists but isn't read.
+9. **Ranking/routing failure** — right memory loses to irrelevant context.
+10. **Scope failure** — intended state unavailable due namespace boundary.
+11. **Scope leakage** — state crosses Project/user/org/agent boundary improperly.
+12. **Over-personalization** — memory influences irrelevant tasks.
+13. **Under-personalization** — relevant memory ignored.
+14. **Correction failure** — new state does not supersede/reconcile old state.
+15. **Forgetting failure** — removed state persists or is recreated.
+16. **Dependency-erasure failure** — derived facts survive after their sole source is erased.
+17. **Concurrency failure** — writer clobbers a newer write.
+18. **Target-store contention** — in-place consolidation/write target remains held.
+19. **Memory poisoning** — untrusted input persists malicious durable state.
+20. **Instruction escalation** — memory data incorrectly gains policy authority.
+21. **Capacity failure** — index/store exceeds usable limits.
+22. **Entropy failure** — duplicates/stale fragments degrade recall.
+23. **Consolidation failure** — cleanup merges distinct facts or preserves bad state.
+24. **Audit failure** — no reliable origin/change history.
+25. **Retention mismatch** — actual deletion/retention differs from user expectation.
+26. **Model-use failure** — correct context reaches Claude but is misused.
+27. **Source-of-truth divergence** — memory becomes stale duplicate of live reality.
+28. **Compaction confusion** — temporary context summary mistaken for durable memory.
+29. **History/memory conflation** — resumed/searchable transcripts mistaken for synthesized memory.
+30. **Preview-drift failure** — fast-moving API behavior changes while docs/spec assumptions remain stale.
 
 ---
 
-# 131. Complete Failure Taxonomy
-
-A serious Claude-like memory system must handle at least these failure categories.
-
-### Capture failure
-Useful durable information is never admitted.
-
-### Over-capture
-Temporary or irrelevant details become persistent.
-
-### Provenance failure
-Model/tool/inference content is silently promoted to user-established truth.
-
-### Entity duplication
-One person/project becomes several inconsistent identities.
-
-### Misrouting
-A fact is stored under the wrong semantic subject/domain.
-
-### Staleness
-Old state remains active after circumstances change.
-
-### Contradiction
-Incompatible states coexist without resolution.
-
-### Retrieval failure
-The right memory exists but is not found/read.
-
-### Ranking/routing failure
-The right memory is available but loses to less relevant context.
-
-### Scope failure
-Correct state is inaccessible due to intended or accidental namespace boundaries.
-
-### Scope leakage
-State crosses a Project/agent/org/privacy boundary where it should not.
-
-### Over-personalization
-Memory affects a response where it should not.
-
-### Under-personalization
-Relevant durable state is ignored.
-
-### Correction failure
-New user-established state fails to supersede/reconcile old state.
-
-### Forgetting failure
-Explicitly removed state persists or is recreated.
-
-### Dependency-erasure failure
-Derived facts survive after their only supporting fact was erased.
-
-### Concurrency failure
-One writer overwrites another writer's newer change.
-
-### Memory poisoning
-Untrusted instructions/data become durable malicious state.
-
-### Instruction escalation
-Persisted data incorrectly gains policy/system authority.
-
-### Capacity failure
-Memory/index grows beyond useful context/retrieval limits.
-
-### Entropy failure
-Duplicates and stale fragments degrade retrieval over time.
-
-### Consolidation failure
-Cleanup merges distinct facts incorrectly or preserves stale ones.
-
-### Audit failure
-No reliable explanation exists for who/what changed durable state.
-
-### Retention mismatch
-User expectations do not match actual chat/memory/version retention.
-
-### Model-use failure
-Correct context reaches Claude but Claude misinterprets or ignores it.
-
-### Source-of-truth divergence
-Memory becomes a stale duplicate of a live external system.
-
----
-
-# 132. Consumer Experiments That Could Reduce Unknowns
-
-Document research has diminishing returns on undocumented internals. Controlled experiments should test:
-
-## Write latency
-
-Compare natural durable facts vs explicit “remember X” and measure Topic visibility/new-chat availability.
-
-## Admission threshold
-
-Introduce equally durable facts with different repetition/importance levels.
-
-## Profile threshold
-
-Test stable identity vs dated/temporary project state and inspect file routing where possible.
-
-## Provenance
-
-Compare direct user statement, Claude inference, web/tool result, and user-confirmed tool result.
-
-## Entity resolution
-
-Refer to the same person/project through aliases and inspect whether memory remains canonical.
-
-## Correction
-
-Establish A, later B, and inspect chronology/current-state behavior.
-
-## Explicit forgetting
-
-Create a fact plus a dependent fact, forget the source, and inspect both.
-
-## Concurrency
-
-Perform near-simultaneous Chat/cloud-Cowork updates to one topic where practical.
-
-## Sparse retrieval
-
-Create many memory topics and observe which detailed files activate for targeted questions.
-
-## Project boundaries
-
-Duplicate facts inside/outside Projects and test leakage in both directions.
-
-## Incognito
-
-Verify no memory read/write while other personalization remains available.
-
-## Import/export fidelity
-
-Export, re-import into a clean controlled state, compare loss/restructuring.
-
-## Scale
-
-Build hundreds/thousands of facts/topics and measure retrieval degradation/pruning behavior.
-
----
-
-# 133. Claude Code Experiments
-
-Useful black-box tests include:
-
-- verify `MEMORY.md` 200-line vs 25-KB startup cutoff independently;
-- place relevant data beyond the cutoff and confirm it is not injected until explicitly read elsewhere;
-- measure index-overflow reminders;
-- compare worktrees and distinct repos/machines;
-- test `autoMemoryDirectory` across user/project/local scopes with workspace trust on/off;
-- verify `modified` frontmatter behavior;
-- verify transcript cleanup does not remove auto-memory;
-- compare normal vs forked subagent inheritance;
-- compare disabled auto-memory with subagent `memory:` declarations;
-- inspect `/context` before/after compaction.
-
----
-
-# 134. API / Managed Agent Experiments
-
-Useful implementation tests include:
-
-- `content_sha256` conflict injection and merge/retry;
-- simultaneous self-hosted workers and 15-second synchronization visibility;
-- writes outside actual returned mount paths;
+# 14. Experiments that could reduce remaining unknowns
+
+## 14.1 Consumer Claude
+
+- natural durable fact vs explicit “remember X” write latency;
+- repeated vs one-off memory admission;
+- stable identity vs temporary project-state routing;
+- direct user fact vs Claude inference vs tool result vs user-confirmed tool result;
+- aliases/entity resolution;
+- correction chronology;
+- explicit forgetting + dependent-fact deletion;
+- simultaneous Chat/cloud-Cowork writes;
+- many-topic sparse retrieval;
+- Project leakage tests;
+- Incognito read/write boundary;
+- import/export fidelity;
+- hundreds/thousands of memories for scale/pruning.
+
+## 14.2 Claude Code
+
+- verify 200-line vs 25-KB startup cutoff independently;
+- relevant content beyond cutoff;
+- index-overflow reminders/errors;
+- worktrees vs independent repos/machines;
+- `autoMemoryDirectory` user/project/local + workspace trust;
+- `modified` frontmatter behavior;
+- transcript cleanup vs auto-memory;
+- ordinary vs forked subagent inheritance;
+- globally disabled auto-memory + subagent `memory:` field;
+- `/context` before/after compaction;
+- additional-directory instruction opt-in;
+- rule brace-expansion/glob edge cases.
+
+## 14.3 API / Managed Agents / Dreams
+
+- `content_sha256` stale precondition and idempotent-final-state 200 behavior;
+- simultaneous self-hosted workers and 15-second visibility;
 - read-only mutation attempts;
-- store-limit behavior at 10,000 paths;
-- deletion followed by version-history retrieval;
-- redaction while preserving audit event;
-- Dream completion vs partial output on cancellation/failure;
-- input deletion/archive mid-Dream;
-- Dream consolidation quality across duplicates/contradictions;
-- read-only old store + fresh read/write consolidated store architecture.
+- writes outside returned mount path;
+- 10,000-memory limit behavior;
+- delete live memory then retrieve version history;
+- redact old version while preserving audit;
+- Dream `create_new` vs `update_existing` semantics;
+- target-store-held in-place Dream conflict;
+- Dream cancellation/failure partial output;
+- input archive/delete mid-Dream;
+- consolidation quality with contradictions/duplicates;
+- original read-only store + consolidated writable store rollout pattern.
 
 ---
 
-# 135. What We Know With Very High Confidence
+# 15. Hard unknowns
 
-1. Current consumer memory uses individual categorized topics/files rather than one daily global summary for normal users.
-2. Chat and cloud Cowork share current consumer memory.
-3. Local Cowork does not share that cloud memory.
-4. Projects have isolated memory spaces and dedicated summaries.
-5. Project Knowledge/RAG is separate from Project memory.
-6. Past Chat Search is a separate RAG system with project boundaries.
-7. Memory and chat search have separate controls/availability.
-8. Pause stops both current-memory read and write without deleting stored memory.
-9. Reset deletes generated memory including Project memory.
-10. Deleting a source chat does not automatically delete already-generated current memory.
-11. Memory Topics are individually editable.
-12. Consumer memory supports import/export.
-13. Sensitive memory is opt-in and separately governed.
-14. Incognito neither reads nor writes ordinary memory/history.
-15. Incognito can still receive non-memory personalization.
-16. Team/Enterprise have separate organization controls and retention/export behavior.
-17. Consumer memory data is included in data exports.
-18. Enterprise memory entries are encrypted at rest.
-19. Claude Code separates human-authored instructions from auto-memory.
-20. Claude Code auto-memory has user/feedback/project/reference types.
-21. Claude Code avoids storing repository-reconstructible facts.
-22. Claude Code uses `MEMORY.md` as a startup index and lazy topic files.
-23. Startup `MEMORY.md` is bounded to first 200 lines or 25 KB.
-24. Claude Code auto-memory is machine-local by default.
-25. Auto-memory can be toggled/disabled.
-26. Auto-memory survives ordinary transcript cleanup.
-27. Claude Code subagents can have user/project/local memories.
-28. Ordinary subagents do not automatically inherit main-agent auto-memory.
-29. API Memory is client-owned persistent storage exposed through a filesystem-like tool.
-30. API Memory is designed for JIT retrieval and combination with compaction.
-31. Managed Agent Memory Stores support up to 10,000 memories per store, 100 KB per memory, and up to 8 stores/session under current docs.
-32. Managed Memory supports read-only/read-write scopes.
-33. Managed Memory supports `content_sha256` optimistic concurrency.
-34. Managed Memory maintains immutable version history.
-35. Historical versions can survive deletion of the live memory.
-36. Historical content can be redacted while preserving an audit record.
-37. Self-hosted Managed Agent memory uses synchronized local copies rather than a live network mount.
-38. Writable persistent memory creates a prompt-injection persistence risk.
-39. Dreams take one input store plus 1–100 sessions and create a separate output store.
-40. Dreams do not modify the input store.
-41. Dreams are asynchronous and can leave partial output on failure/cancel.
-42. Anthropic explicitly treats consolidation/forgetting as necessary for long-lived memory systems.
+## 15.1 Consumer retrieval — U
 
----
+Unknown:
 
-# 136. Hard Unknowns — Consumer Retrieval
-
-These remain **U**:
-
-- whether consumer memory uses embeddings;
+- whether embeddings are used;
 - which embedding model, if any;
-- whether a vector database/search service is used;
-- lexical vs semantic routing details;
-- recency weighting;
-- repetition/frequency weighting;
-- salience/importance weighting;
-- retrieval thresholds;
-- maximum detailed files read per turn;
-- detailed-memory token budget;
-- whether the main Claude model selects files itself;
-- whether a separate router/classifier preselects files;
-- whether server-side pre-ranking/reranking occurs;
-- exact fallback behavior when relevant files exceed context budget.
+- whether vector search/database is used;
+- lexical vs semantic router internals;
+- recency/frequency/salience weights;
+- thresholds;
+- max files read per turn;
+- memory token budget;
+- whether main Claude selects files or a separate router does;
+- reranking/top-K;
+- fallback behavior when all relevant files do not fit.
 
----
+## 15.2 Consumer memory writing — U
 
-# 137. Hard Unknowns — Consumer Memory Writing
+Unknown:
 
-**U:**
+- exact background writer model/service;
+- exact post-turn prompt;
+- classifier involvement;
+- admission threshold/formula;
+- durability/repetition scoring;
+- precise merge/conflict algorithm;
+- additional periodic maintenance beyond turn-level filing;
+- whether ordinary consumer memory runs a hidden Dreams-like consolidator.
 
-- exact model used for the post-turn/background memory pass;
-- whether it is the same Claude model with a special prompt;
-- whether smaller classifiers participate;
-- exact admission score/threshold;
-- exact durability/repetition formula;
-- precise correction-merging algorithm;
-- exact consumer conflict-resolution implementation;
-- whether there are additional periodic maintenance passes beyond turn-level filing;
-- whether consumer memory uses an unpublished Dreams-like consolidator.
+## 15.3 Consumer storage — U
 
----
-
-# 138. Hard Unknowns — Consumer Storage
-
-**U:**
+Unknown:
 
 - physical database/object-store technology;
-- exact backend record schema;
-- whether each model-facing file maps one-to-one to one backend object;
-- exact total memory capacity per user/account;
-- exact per-topic/file capacity;
-- cache architecture;
-- tenant/shard model;
-- consistency guarantees between Chat and cloud Cowork;
-- exact deletion propagation mechanics;
-- exact internal provenance schema beyond captured evidence.
+- exact backend schema;
+- one-file-to-one-record mapping;
+- total account capacity;
+- per-topic capacity;
+- cache/shard/tenant architecture;
+- exact Chat/cloud-Cowork consistency model;
+- exact deletion propagation;
+- exact production provenance representation.
 
----
+## 15.4 Consumer decay/consolidation — U
 
-# 139. Hard Unknowns — Consumer Consolidation and Decay
+Unknown:
 
-**U:**
+- automatic merging outside capacity pressure;
+- memory decay from non-use;
+- whether retrieval reinforces retention;
+- whether salience changes from access/repetition;
+- hidden periodic consolidation;
+- relationship between legacy migration and new memory maintenance.
 
-- whether old consumer files automatically merge outside capacity pressure;
-- whether unused memories decay automatically;
-- whether successful retrieval reinforces retention;
-- whether salience changes with frequency/use;
-- whether there is a hidden periodic “Dreaming” equivalent for consumer memory;
-- whether legacy migration and new-memory cleanup share infrastructure.
+## 15.5 Cross-surface writers — U
 
----
-
-# 140. Hard Unknowns — Cross-Surface Consumer Writers
-
-Officially confirmed:
+Confirmed:
 
 ```text
 Chat ↔ cloud Cowork
@@ -3120,72 +1823,37 @@ Chat ↔ cloud Cowork
 
 Unknown:
 
-- complete list of Claude surfaces able to write the same consumer store;
-- whether Claude in Chrome/Excel/PowerPoint/other product surfaces can directly mutate it or only through Cowork/Chat mediation;
-- whether every surface uses the same provenance tags/file schema;
-- whether consumer-memory concurrency handling is exactly the captured `if_version` implementation in production for all users.
+- complete list of surfaces able to write the shared consumer store;
+- whether Claude in Chrome/Excel/PowerPoint or other surfaces write directly or through Chat/Cowork mediation;
+- whether all surfaces use the captured provenance/file schema;
+- whether `if_version` is universal production behavior.
 
 ---
 
-# 141. Things We Must Not Claim Without New Evidence
+# 16. Claims we must not make without new evidence
 
-Do not say:
+Do **not** claim:
 
-### “Claude consumer memory definitely uses a vector database.”
-
-Unknown.
-
-### “Every memory is injected into every prompt.”
-
-Strong evidence indicates sparse/selective loading.
-
-### “Anthropic physically stores Markdown files on disk for consumer memory.”
-
-Unproven; the filesystem may be a model-facing abstraction.
-
-### “Claude Code and Claude Chat use one shared store.”
-
-No official evidence.
-
-### “Projects search all chats everywhere.”
-
-False; project boundaries apply.
-
-### “Deleting a chat deletes current generated memory.”
-
-False in the current topic-based architecture.
-
-### “Memory guarantees Claude follows a preference.”
-
-Memory is context, not enforcement.
-
-### “Dreams run on ordinary consumer memory.”
-
-Unknown.
-
-### “The Fable 5.1 prompt capture is an official Anthropic contract.”
-
-False; it is Class B evidence.
-
-### “Managed Memory Store capacity is 2,000.”
-
-Stale. Current docs say **10,000 memories per store**.
-
-### “`autoMemoryDirectory` can never come from project/local settings.”
-
-Stale. Current docs describe settings-scope behavior governed by workspace trust.
-
-### “Incognito means zero retention.”
-
-False; documented retention still applies.
-
-### “Monthly Recap directly ingests raw Gmail/Drive content.”
-
-False under current documentation; raw connector content is excluded, though Claude-authored conversation summaries may contribute.
+- “Claude consumer memory definitely uses a vector database.” — **unknown**.
+- “Every memory is inserted into every prompt.” — evidence points to selective loading.
+- “Anthropic physically stores consumer Markdown files on disk.” — unproven.
+- “Claude Code and Claude Chat share one store.” — no official evidence.
+- “Projects search all chats globally.” — false; project boundaries apply.
+- “Deleting a source chat deletes current generated memory.” — false in current topic-based memory.
+- “Memory guarantees Claude follows a preference.” — memory is context, not enforcement.
+- “Dreams always create a separate output and never mutate input.” — **stale**; default `create_new` is non-mutating, but current EAP `update_existing` can consolidate the input in place.
+- “Dreams always modify the input.” — also false; default remains `create_new`.
+- “The Fable 5.1 capture is an official Anthropic product contract.” — false; Class B only.
+- “Managed Memory Store capacity is 2,000.” — stale; current docs say **10,000**.
+- “`autoMemoryDirectory` can never come from project/local settings.” — stale; current docs say any supported settings scope, with workspace trust.
+- “Incognito means zero retention.” — false.
+- “Monthly Recap directly ingests raw Gmail/Drive content.” — false under current docs.
+- “Compaction deletes Claude Code persistent memory.” — false.
+- “Resumed subagent conversation history is the same thing as persistent subagent memory.” — false distinction.
 
 ---
 
-# 142. Canonical Architecture
+# 17. Canonical architecture
 
 ```text
                               SOURCES OF TRUTH
@@ -3204,9 +1872,9 @@ False under current documentation; raw connector content is excluded, though Cla
           HISTORICAL EVIDENCE                DURABLE MEMORY
             chat search/RAG              topics/files/stores
                   │                                │
-                  │                        compact routing state
+                  │                       compact routing/index
                   │                                │
-                  │                         JIT detail retrieval
+                  │                         JIT detailed reads
                   │                                │
                   └───────────────┬────────────────┘
                                   │
@@ -3217,7 +1885,7 @@ False under current documentation; raw connector content is excluded, though Cla
                                   ▼
                            ACTIVE CONTEXT
                                   │
-                     instructions / rules / tools
+                    instructions / rules / tools
                                   │
                                   ▼
                                 MODEL
@@ -3225,245 +1893,186 @@ False under current documentation; raw connector content is excluded, though Cla
                                   ▼
                               RESPONSE
                                   │
-                     explicit correction/forget
+                    explicit correction / forget
                                   │
                     background/agent memory writes
                                   │
-                         version-safe persistence
+                       concurrency-safe persistence
                                   │
                                   ▼
                               FUTURE USE
                                   │
-                    periodic pruning/consolidation
+                       pruning / consolidation
                                   │
                                   ▼
                                 DREAMS
-                       (Managed Agents today)
+                  create_new or EAP update_existing
 ```
 
 ---
 
-# 143. Core Design Principle
+# 18. High-confidence fact checklist
 
-The strongest abstraction across everything currently known is:
+The following are all high-confidence/current unless noted:
 
-> **External systems hold truth. Memory preserves durable context that is hard or expensive to reconstruct. Historical search recovers exact episodes. Scope controls where information may flow. Sparse retrieval controls what reaches context. Provenance controls what should be trusted. Versioning protects shared writes. Explicit correction and forgetting repair state. Security boundaries prevent poisoned memory from gaining authority. Consolidation prevents long-lived memory from decaying into duplicates, contradictions, and stale assumptions.**
-
----
-
-# 144. Primary Evidence Registry
-
-## Current Consumer Claude
-
-### Use Claude's chat search and memory to build on previous context
-
-Canonical current source for generated memory, past-chat search, Projects, pause/reset, sensitive controls, deletion semantics, plan availability, organization governance, data exports, retention, encryption, and legacy migration notes.
-
-https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
-
-### Claude Release Notes
-
-Timeline source for the 2026 memory rollout/evolution including July 10 and August 25 changes.
-
-https://support.claude.com/en/articles/12138966-release-notes
-
-### Claude's memory works everywhere and you decide what's in it
-
-Official source for short files under Topics and shared Chat/cloud-Cowork memory.
-
-https://claude.com/blog/claudes-memory-works-everywhere-and-you-decide-whats-in-it
-
-### Import and export your memory from Claude
-
-Memory portability, work-focused import extraction, export behavior, and legacy transition.
-
-https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-claude
-
-### RAG for Projects
-
-Project Knowledge RAG, all-plan current availability, automatic retrieval behavior, and approximate 10× practical capacity claim.
-
-https://support.claude.com/en/articles/11473015-retrieval-augmented-generation-rag-for-projects
-
-### Incognito Chats
-
-No ordinary memory/history/search, 30-day default retention, organization export behavior, and non-memory personalization distinction.
-
-https://support.claude.com/en/articles/12260368-use-incognito-chats
-
-### Monthly Recap
-
-Reflect behavior, exclusions, connected-source handling, availability, and recap metrics.
-
-https://support.claude.com/en/articles/15672559-see-your-monthly-recap
-
----
-
-# 145. Claude Code Evidence Registry
-
-### Claude Code — Memory
-
-Canonical source for `CLAUDE.md`, rules, imports, scopes, auto-memory types, storage, startup index limits, configuration, `modified` timestamps, transcript cleanup, diagnostics, compaction interactions, and memory philosophy.
-
-https://code.claude.com/docs/en/memory
-
-### Claude Code — Context Window
-
-Canonical companion source for context compaction/reinjection behavior.
-
-https://code.claude.com/docs/en/context-window
-
-### Claude Code — Subagents
-
-Canonical source for user/project/local subagent memory scopes, directories, enablement, startup behavior, and non-inheritance distinctions.
-
-https://code.claude.com/docs/en/sub-agents
-
----
-
-# 146. Claude Platform Evidence Registry
-
-### Memory Tool
-
-Canonical source for client-owned `/memories` abstraction, tool commands, JIT retrieval, implementation security, memory expiration, and compaction integration.
-
-https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
-
-### Context engineering tools
-
-Additional Anthropic context-engineering examples for selective/JIT memory retrieval.
-
-https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools
-
-### Managed Agent Memory
-
-Canonical source for Memory Stores, current **10,000-memory** limit, 100-KB documents, eight-store session attachments, access modes, mount paths, self-hosted sync, security warnings, optimistic concurrency, versions, archive/delete lifecycle, and store operations.
-
-https://platform.claude.com/docs/en/managed-agents/memory
-
-### Memory Versions
-
-Canonical API source for immutable version records, actors, historical content, and redaction/audit behavior.
-
-https://platform.claude.com/docs/en/api/http/beta/memory_stores/memory_versions
-
-### Dreams
-
-Canonical source for offline consolidation from one Memory Store + 1–100 sessions into a new store, asynchronous lifecycle, instructions, model restrictions, cancellation/failure semantics, and billing/limits.
-
-https://platform.claude.com/docs/en/managed-agents/dreams
+1. Modern consumer memory is individual categorized Topics/files, not one daily summary for normal users.
+2. The major current consumer transition happened July 10, 2026.
+3. Chat and cloud Cowork share memory.
+4. Local Cowork does not share the cloud consumer memory system.
+5. Projects have isolated memory spaces and dedicated summaries.
+6. Project Knowledge/RAG is distinct from Project memory.
+7. Project RAG is currently available across Free/Pro/Max/Team/Enterprise.
+8. Past Chat Search is separate RAG, with Project boundaries.
+9. Past Chat Search is currently Pro/Max/Team/Enterprise.
+10. Memory and chat search have separate controls.
+11. Pause stops memory reads and writes without deleting stored memory.
+12. Reset deletes generated memory including Project memory.
+13. Deleting a source chat does not automatically delete an existing current Topic.
+14. Topics are individually editable/deletable.
+15. Memory is included in data exports.
+16. Consumer memory supports import/export.
+17. Imported memory extraction is experimental and work-focused.
+18. Sensitive memory is excluded by default and separately opt-in.
+19. Incognito neither reads nor writes ordinary memory/history.
+20. Incognito can still receive non-memory personalization.
+21. Incognito is retained roughly 30 days by default, subject to organization policy.
+22. Team/Enterprise have organization-level memory controls.
+23. Enterprise memory entries are encrypted at rest.
+24. Monthly Recap is derived and separate from memory.
+25. Monthly Recap excludes Incognito/Health/Cowork/Claude Code.
+26. Raw Gmail/Drive connector content is not directly used in Monthly Recap.
+27. Claude Code separates `CLAUDE.md`/rules from auto-memory.
+28. Claude Code treats both as context, not deterministic configuration.
+29. Auto-memory has user/feedback/project/reference types.
+30. Auto-memory avoids codebase-reconstructible facts.
+31. Auto-memory is on by default in supported versions and can be disabled.
+32. Auto-memory is machine-local by default.
+33. Worktrees/subdirs of one repo share one auto-memory directory.
+34. `autoMemoryDirectory` can come from supported user/project/local/policy/explicit settings with trust rules.
+35. `MEMORY.md` is the startup index.
+36. Startup index load is first 200 lines or first 25 KB, whichever comes first.
+37. Topic files are lazy/on-demand.
+38. Over-limit index writes still succeed but trigger a rewrite warning/error and excess is not loaded next time.
+39. Claude Code displays memory save/recall activity.
+40. `modified` frontmatter timestamps exist in v2.1.214+ when frontmatter already exists.
+41. Transcript cleanup does not delete auto-memory.
+42. `/memory` and `/context` serve different inspection roles.
+43. Project-root `CLAUDE.md` is reread/reinjected after `/compact`.
+44. Subagents can have user/project/local persistent memory.
+45. Globally disabling auto-memory also disables subagent memory behavior.
+46. Ordinary subagents do not automatically inherit main-agent auto-memory.
+47. API Memory Tool is client-side and filesystem-like under `/memories`.
+48. API Memory supports view/create/replace/insert/delete/rename semantics.
+49. API Memory is designed for JIT retrieval and persistence across context resets.
+50. Managed Agent Memory Stores are workspace-scoped persistent text stores.
+51. Managed Store current capacity is 10,000 memories.
+52. Each Managed memory is capped at 100 kB (~25K tokens).
+53. Up to 8 stores can be attached per session.
+54. Store attachments are chosen at session creation.
+55. Read-only/read-write access is filesystem-enforced.
+56. Exact `mount_path` should be read from the session resource.
+57. Self-hosted stores are synchronized local copies, not live mounts.
+58. Self-hosted default sync interval is approximately 15 seconds.
+59. Managed memory supports stable listing/path-prefix/depth semantics.
+60. `content_sha256` provides optimistic concurrency.
+61. Each mutation creates immutable version history.
+62. Version history can survive live memory deletion while retained.
+63. Historical redaction preserves audit metadata.
+64. Archive is one-way under current Managed Memory docs.
+65. Store deletion removes contained memories/version history.
+66. Writable memory is a documented prompt-injection persistence risk.
+67. Dreams are research preview and asynchronous.
+68. Dreams take one Memory Store plus 1–100 sessions.
+69. Default Dream output is `create_new`, producing a separate cloned output without mutating input.
+70. Current EAP/API also supports `update_existing`, consolidating the input store in place.
+71. Dream instructions are capped at 4096 characters.
+72. Dream model config can include standard/fast speed where supported.
+73. Dream API shape is explicitly volatile in research preview.
+74. Failed/canceled `create_new` Dreams can leave partial output stores.
+75. Dream processing has observable session/usage state.
+76. Durable memory systems need consolidation/expiration, not unbounded accumulation.
 
 ---
 
-# 147. Implementation-Evidence Registry
+# 19. Evidence registry
 
-### Captured Claude Fable 5.1 system prompt
+## Consumer Claude
 
-Primary Class B evidence for:
+- Current memory/search/Projects/governance: https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context
+- Release timeline: https://support.claude.com/en/articles/12138966-release-notes
+- Topics + Chat/cloud-Cowork shared memory: https://claude.com/blog/claudes-memory-works-everywhere-and-you-decide-whats-in-it
+- Import/export: https://support.claude.com/en/articles/12123587-import-and-export-your-memory-from-claude
+- Project RAG: https://support.claude.com/en/articles/11473015-retrieval-augmented-generation-rag-for-projects
+- Incognito: https://support.claude.com/en/articles/12260368-use-incognito-chats
+- Monthly Recap: https://support.claude.com/en/articles/15672559-see-your-monthly-recap
 
-- consumer `memory_filesystem` abstraction;
-- memory read/write/list/delete operations;
-- `/profile.md`, `/preferences.md`, `/topics/`, `/areas/`, `/people/` taxonomy;
-- `<memory_listing>` routing view;
-- `name`, `description`, `sources`, aliases, `[[links]]`;
-- three-month profile stability test;
-- under-300-word profile target;
-- post-turn background memory pass;
-- foreground explicit remember/forget path;
-- stated/observed/inferred provenance concepts;
-- user-confirmation admission semantics;
-- semantic file routing;
-- `if_version` concurrency protocol;
-- read-before-mutation behavior;
-- correction vs forgetting semantics;
-- dependent-fact deletion;
-- file-capacity consolidation;
-- broader internal sensitive-data protections;
-- memory-as-untrusted-context rules.
+## Claude Code
 
-https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/Claude-Fable-5.1.md
+- Memory / `CLAUDE.md` / rules / auto-memory: https://code.claude.com/docs/en/memory
+- Context window / compaction: https://code.claude.com/docs/en/context-window
+- Subagents: https://code.claude.com/docs/en/sub-agents
 
-### Captured Claude Opus 5 system prompt
+## Claude Platform
 
-Contains highly similar memory instructions in the same external capture repository. Treat as same-source corroboration, not independent Anthropic confirmation.
+- API Memory Tool: https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
+- Context-engineering examples: https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools
+- Managed Agent Memory: https://platform.claude.com/docs/en/managed-agents/memory
+- Memory API reference: https://platform.claude.com/docs/en/api/http/beta/memory_stores/memories
+- Memory Versions: https://platform.claude.com/docs/en/api/http/beta/memory_stores/memory_versions
+- Dreams overview: https://platform.claude.com/docs/en/managed-agents/dreams
+- Dreams create API: https://platform.claude.com/docs/en/api/http/beta/dreams/create
+- Dreams type/API reference: https://platform.claude.com/docs/en/api/typescript/beta/dreams
 
-https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/OPUS-5.md
+## Class B implementation evidence
 
----
-
-# 148. Version 1.1 Corrections From Version 1.0
-
-Version 1.1 explicitly corrects these v1.0 problems:
-
-1. **Managed Memory Store capacity:** v1.0 said 2,000 memories/store. Current official documentation says **10,000 memories/store**.
-2. **`autoMemoryDirectory`:** v1.0 described project/local configuration as categorically refused. Current docs describe settings-scope resolution governed by workspace trust.
-3. Added current consumer memory export, encryption, organization audit, and retention details.
-4. Added work-focused import filtering and experimental import semantics.
-5. Added Monthly Recap connector/input/exclusion details.
-6. Added exact captured Fable profile stability test and **under-300-word** target.
-7. Added exact `<memory_listing>` routing behavior and observed metadata schema.
-8. Added read-before-versioned-mutation and fine-grained forgetting behavior.
-9. Added broader captured sensitive-data rules while clearly keeping them Class B.
-10. Added Claude Code startup/load limits, `/context`, `/memory`, imports, rules, auto-memory toggles, index-overflow, `modified` timestamps, transcript cleanup, and subagent non-inheritance.
-11. Added Managed Agent mount-path and self-hosted synchronization semantics, including approximately 15-second sync cadence.
-12. Added current Managed Memory version survival/redaction/audit behavior.
-13. Added deeper Dreams lifecycle, error/dependency, model, instruction, billing, and partial-output behavior.
+- Fable 5.1 captured system prompt: https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/Claude-Fable-5.1.md
+- Opus 5 same-source capture: https://github.com/elder-plinius/CL4R1T4S/blob/93b0ae6fb503db6642e58f9d6352db973a900cdc/ANTHROPIC/OPUS-5.md
 
 ---
 
-# 149. Change Log
+# 20. Version reconciliation / changelog
+
+## Version 1.2 — September 8, 2026
+
+Reconciled the evidence ledger against current Anthropic API/product documentation after v1.1 verification.
+
+Critical correction:
+
+- v1.1 said Dreams never mutate the input store. Current API reference now exposes **`output_behavior: update_existing`**, which in the current EAP writes consolidated memory into the Dream's own input Memory Store. The **default** remains non-destructive `create_new`.
+
+Also made explicit:
+
+- Dreams research-preview volatility and model `speed` configuration;
+- target-store-held contention for in-place Dreams;
+- exact current Managed Memory basic/full view and idempotent-precondition nuance;
+- exact API Memory Tool view limits and command semantics;
+- Claude Code 1,000-pattern/4-MiB path-rule expansion budget;
+- current `CLAUDE.md` 4-MiB maximum load and under-200-line guidance;
+- `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD` behavior;
+- `InstructionsLoaded`, `/doctor`, `/context`, `/memory` distinctions;
+- current auto-memory directory/settings rules and versioned features;
+- all v1.1 material retained in denser evidence-ledger form.
 
 ## Version 1.1 — September 8, 2026
 
-Rebuilt v1.0 from a comprehensive architecture overview into an exhaustive evidence ledger.
-
-Added or expanded:
-
-- plan/platform availability;
-- exact current/legacy boundaries;
-- data export, retention, encryption, and audit behavior;
-- full sensitive-memory and Incognito semantics;
-- Monthly Recap inputs/exclusions;
-- exact Fable memory-listing/profile/frontmatter/concurrency/deletion evidence;
-- Claude Code instruction scopes/imports/rules/load mechanics;
-- auto-memory toggles, versions, storage overrides, index overflow, timestamps, diagnostics;
-- subagent memory directories/enablement/non-inheritance;
-- API Memory Tool configuration/commands/security/expiration;
-- Managed Agent current limits and attachment semantics;
-- managed vs self-hosted memory synchronization;
-- Memory Store concurrency/version/redaction/archive lifecycle;
-- Dreams async lifecycle, dependencies, partial outputs, models, instructions, limits and billing;
-- expanded failure taxonomy;
-- expanded experimental agenda;
-- hard-unknown registry;
-- claims that must not be made;
-- explicit completeness boundary.
-
-Corrected:
-
-- Managed Store capacity from stale 2,000 to current **10,000** memories per store.
-- stale `autoMemoryDirectory` scope characterization.
+Expanded v1.0 into an evidence ledger and corrected stale Managed Store capacity (`2,000` → current `10,000`) plus stale `autoMemoryDirectory` scope behavior.
 
 ## Version 1.0 — September 8, 2026
 
-Initial canonical Claude memory source-of-truth document.
+Initial canonical Claude-memory source-of-truth document.
 
 ---
 
-# 150. Current Final Conclusion
+# 21. Final canonical conclusion
 
 As of September 8, 2026:
 
-**The strongest available evidence indicates that Claude memory is an external, persistent, selectively retrieved family of context systems rather than a property stored inside the model itself.**
+> **Claude memory is best understood as a family of external, persistent, selectively retrieved context systems—not as knowledge stored inside the model itself.**
 
-Consumer Claude now uses individual categorized memory topics/files, with Project-scoped memory and separate historical-chat RAG. Chat and cloud Cowork share consumer memory. Claude Code independently exposes a transparent local **index + topic files + lazy retrieval** architecture alongside human-authored instructions. The Claude API exposes a developer-owned filesystem-like memory primitive. Managed Agents extend the pattern with scoped persistent stores, read/write controls, current 10,000-memory store capacity, version history, optimistic concurrency, sandbox/self-hosted synchronization, and offline consolidation through Dreams.
+Consumer Claude uses editable categorized Topics/files plus Project-scoped memory and separate historical-chat RAG. Chat and cloud Cowork share consumer memory. Claude Code exposes a transparent local index + topic-file architecture alongside human-authored instruction files. The Claude API exposes a developer-owned filesystem-like memory primitive. Managed Agents extend that pattern with scoped persistent stores, current 10,000-memory capacity, read/write access control, audit/version history, optimistic concurrency, managed/self-hosted synchronization, and Dreams for broader consolidation.
 
-The strongest cross-product principle is:
+The final architecture rule is:
 
-> **Store the irrecoverable residue; re-query authoritative reality.**
+> **Source systems hold truth. Memory preserves durable user/project/agent context that is hard or expensive to reconstruct. Historical retrieval recovers exact episodes. Scope controls what can flow where. Sparse retrieval controls what reaches context. Provenance controls what should be trusted. Explicit corrections repair state. Versioning protects shared writes. Security boundaries prevent poisoned memory from becoming policy. Expiration and consolidation prevent long-lived memory from decaying into duplicates, contradictions, and stale assumptions.**
 
-The full design principle is:
-
-> **Source systems hold truth. Memory stores durable user/project/agent context that is hard or expensive to reconstruct. Historical retrieval recovers exact episodes. Scope controls what can flow where. Sparse retrieval controls what reaches the model. Provenance controls what should be trusted. Explicit corrections repair state. Versioning prevents clobbering. Security boundaries prevent poisoned memory from becoming policy. Garbage collection and Dreams prevent long-lived memory from decaying into duplicates, contradictions, and stale assumptions.**
-
-Within the evidence corpus listed above, this Version 1.1 document is the canonical exhaustive source of truth. Anything not established here belongs in the Unknowns registry until new evidence appears.
+Within the evidence corpus listed above, this Version 1.2 document is the canonical exhaustive source of truth. Anything not established here belongs in the Unknowns registry until new evidence appears.
