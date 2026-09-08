@@ -1,8 +1,8 @@
 # ChatGPT Memory — Master Source of Truth
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Last verified:** September 8, 2026  
-**Supersedes:** Version 1.0  
+**Supersedes:** Version 2.0  
 **Scope:** ChatGPT consumer chat-mode memory, plus directly relevant OpenAI system designs, historical implementations, adjacent OpenAI memory implementations, and empirical/client observations.  
 **Purpose:** Maintain one canonical, evidence-graded account of what is publicly known about ChatGPT memory, what can reasonably be inferred, and what remains unknown.
 
@@ -85,7 +85,7 @@ These reveal OpenAI engineering patterns but do not prove identical ChatGPT code
 
 ## E — Empirical / Client Observation
 
-Reproducible studies, exports, frontend/network artifacts, client reverse engineering, or black-box observations.
+Reproducible studies, exports, frontend/network artifacts, client reverse engineering, direct interviews hosted outside OpenAI, or black-box observations.
 
 Useful, but subordinate to current OpenAI documentation.
 
@@ -113,8 +113,9 @@ When sources conflict, use this order:
 4. Older OpenAI documentation.
 5. Historical OpenAI patents/designs.
 6. Current adjacent OpenAI implementations.
-7. Empirical/client observations.
-8. Community speculation.
+7. Direct interviews with OpenAI personnel hosted externally.
+8. Empirical/client observations.
+9. Community speculation.
 
 **Freshness matters even among official OpenAI sources.**
 
@@ -1941,7 +1942,7 @@ Corrected:
 
 ---
 
-# 64. Current Final Conclusion
+# 64. Version 2.0 Final Conclusion — Preserved
 
 As of September 8, 2026:
 
@@ -1968,5 +1969,869 @@ Contemporary OpenAI patents independently describe personalization state contain
 The best architectural abstraction is:
 
 > **History is evidence. Dreaming compiles history into current state. Retrieval recovers relevant episodes. Governance determines what can flow where. Relevance determines what gets activated. Context management assembles what the model sees. The model decides how to use it.**
+
+---
+
+# 65. Evidence Preservation Rule — No Evidence Compression
+
+**Class: Governance rule for this repository**
+
+This source of truth must preserve **both conclusions and the evidence that produced them**.
+
+A later summary must not silently erase a lower-confidence observation merely because the architectural conclusion can be stated more compactly.
+
+For every materially relevant discovery, preserve when available:
+
+```text
+date
+source title
+source URL
+evidence class
+current vs historical status
+specific observation or finding
+architectural implication
+caveat / confidence boundary
+contradictions with other evidence
+open questions
+```
+
+Rules:
+
+1. **Never delete a prior finding merely because it is superseded.** Mark it historical, stale, contradicted, or superseded.
+2. **Do not replace exact observed values with vague summaries.** Preserve the values and separately explain why they may not generalize.
+3. **Do not promote patents to production facts.** Preserve them as system-design evidence.
+4. **Do not promote client/network observations to official API contracts.** Preserve them as observations.
+5. **Do not let architectural summaries replace raw evidence.** Both belong in this file.
+6. **When an official source changes, preserve the old rule and record the newer rule that supersedes it.**
+7. **When source quality differs, preserve the evidence but rank its authority explicitly.**
+8. **Unknown remains a valid result.** Absence of public evidence must never be filled with an implementation guess.
+
+This rule exists specifically to prevent future revisions of this file from losing evidence through over-compression.
+
+---
+
+# 66. Direct Interview with OpenAI Memory / Personalization Leads
+
+**Class: E — direct statements from OpenAI personnel, externally hosted**
+
+On October 6, 2025, the Limitless podcast published an interview introducing **Kristina Kaplan and Sameer Ahmed as leading memory and personalization at OpenAI**.
+
+Important statements/design intent from the interview:
+
+- Sameer said ChatGPT memory predates both of them joining the team.
+- He described the 2024 generation with a notebook analogy: ChatGPT could write selected things down and later consult them, but that did not amount to a full understanding of the user.
+- Kristina described the April 2025 update as an effort to make cross-conversation memory more natural and assistant-like rather than merely carrying a small notebook of facts.
+- Sameer said the team looks at prior art in human/cognitive memory when thinking about the problem.
+- He also emphasized that ChatGPT memory still lagged human memory in areas including understanding the gist of people, interaction fidelity, and memory triggers.
+- Both framed memory as foundational to a persistent assistant that understands the user across interactions rather than restarting from zero.
+- In their discussion of Pulse/personalization, they described memory as foundational to an assistant that can understand what matters to the user and eventually do useful work on the user's behalf.
+- They repeatedly framed the target as an assistant/representative aligned with the user, not a literal digital clone of the user.
+
+This interview is valuable for **design intent**, but it is not an OpenAI-hosted technical specification and does not establish backend implementation details.
+
+Source:
+
+https://limitless.fm/episodes/we-interviewed-the-team-behind-openais-1-feature/transcript
+
+---
+
+# 67. Additional 2026 OpenAI Patent Independently Repeats the Personalization Architecture
+
+**Class: B — contemporary corroborating OpenAI system design**
+
+A third 2026 OpenAI patent independently repeats the personalization-state architecture already visible in Patents 12,591,766 and 12,699,964.
+
+**Patent:** 12,706,918  
+**Title:** *Seamless consumer integration of access to a generative response engine*  
+**Filed:** June 17, 2025  
+**Issued:** August 11, 2026  
+**Assignee:** OpenAI OpCo, LLC  
+**Inventors:** David Cummings, Athyuttam Eleti, Miqdad Jaffer
+
+Although the patent's primary subject is application/API integration rather than memory, its system description says personalization state can include:
+
+- information received directly from the user account;
+- information inferred from user prompts;
+- summaries of prior conversation threads;
+- a searchable index of prior conversation threads;
+- a persisted memory file from previous interactions/sessions;
+- synthesized concepts extracted from past conversation threads;
+- the ability to search past interactions for information relevant to a current conversation;
+- model-directed writes of facts/data judged useful for later sessions.
+
+It also describes conversation metadata that labels personalization state separately from user text, model text, system prompts, and tool/action data.
+
+This matters because the same **synthesized state + searchable interaction history + typed personalization context** architecture appears repeatedly across separate contemporary OpenAI system patents.
+
+It still does **not** prove that current Dreaming V3 production uses every described embodiment.
+
+Source:
+
+https://patents.justia.com/patent/12706918
+
+---
+
+# 68. Historical Personalization Patent — Full Metadata and Previously Compressed Details
+
+**Class: C — historical OpenAI design**
+
+Canonical U.S. publication:
+
+**US20250200361A1 — Selective learning of information for the generation of personalized responses by a generative response engine**
+
+Known patent-family metadata:
+
+- Applicant / assignee lineage: OpenAI OpCo, LLC.
+- U.S. application: **18/732,157**.
+- Priority: U.S. provisional **63/609,558**, filed December 13, 2023.
+- U.S. filing date: June 3, 2024.
+- Publication date: June 19, 2025.
+- International publication: **WO2025128397A1**.
+- Inventors include Prasad Chakka, Dave Cummings, Noah Deutsch, William Fedus, Tarun Gogineni, Yuchen He, Joanne Jang, Lien Mamitsuka, Warren Ouyang, Yilei Qian, John Schulman, Javi Soto Bustos, Anton Tananaev, Jonathan Ward, Marvin Zhang, and Benjamin Zweig.
+
+Previously compressed implementation details that must remain preserved:
+
+## Example notepad capacities
+
+The patent gives **illustrative** note-count examples including values such as:
+
+```text
+20
+50
+100
+200
+500 notes
+```
+
+and illustrative token-budget examples including values such as:
+
+```text
+100
+200
+500
+1,000
+2,000
+4,000
+10,000
+100,000 tokens
+```
+
+Some claims/embodiments also refer to a memory/notepad size on the order of **4,000 notes**.
+
+These are patent examples only. They are **not current ChatGPT limits**.
+
+## Alternative memory representations
+
+The patent does not restrict persistent personalization to one prose notepad. It contemplates alternative representations including embeddings, keys, weights, and more complex stored information such as documents, images, or full conversation/thread material.
+
+## User-readable management
+
+The patent contemplates user-facing inspection and natural-language editing/deletion of remembered information, including the ability for a user to ask the system to remove or modify retained information.
+
+## Personalized-vs-non-personalized candidate selection
+
+One described embodiment can generate personalized and non-personalized candidate response portions, score/evaluate them, and choose a preferred result.
+
+**This is only a possible historical embodiment. It is not evidence that current ChatGPT generates two answers on every turn.**
+
+## Cross-thread inference example
+
+The patent explicitly allows multiple prompts spread over time/threads to collectively imply a user state not directly stated in any single message. One example describes several observations collectively supporting an inference that the user is having a bad week.
+
+## Persistence/runtime path
+
+The patent describes persistent account-associated storage and loading the personalization state into a response-engine instance for low-latency use when a session begins.
+
+## Deep memory separation
+
+Deep-memory embeddings are described separately from the compact personalization notepad, reinforcing that user-profile knowledge and specific past-thread/project knowledge were intentionally modeled as different memory functions.
+
+Primary source:
+
+https://patents.google.com/patent/US20250200361A1/en
+
+International family source:
+
+https://patents.google.com/patent/WO2025128397A1/en
+
+---
+
+# 69. Dreaming V3 Quantitative Rollout Facts
+
+**Class: A**
+
+Two quantitative facts from the Dreaming V3 rollout must remain explicit rather than being compressed into “more scalable.”
+
+## Plus / Pro capacity
+
+OpenAI said the 2026 memory rollout provided **twice as much memory capacity** for Plus and Pro users.
+
+OpenAI did **not** define the unit behind “memory capacity.” It must not be equated with runtime prompt/context tokens without further evidence.
+
+## Compute efficiency
+
+OpenAI said improvements to Dreaming reduced the cost/compute needed to serve the memory system to Free users by approximately **5×**.
+
+This supports the conclusion that Dreaming is a separately operated background memory system with material serving/compute cost, but it does not reveal its model, schedule, or infrastructure.
+
+OpenAI also positioned Dreaming as the shared/scalable memory foundation going forward.
+
+Sources:
+
+https://openai.com/index/chatgpt-memory-dreaming/
+
+https://help.openai.com/en/articles/6825453-chatgpt-release-notes
+
+---
+
+# 70. Exact Historical Client Memory-Capacity Observations
+
+**Class: E — raw observations, very low authority relative to official documentation**
+
+The raw values matter as historical evidence even though their semantics are unresolved.
+
+## September 3, 2024 observation
+
+A user inspecting ChatGPT's memory endpoint reported a response containing approximately:
+
+```text
+memory_max_tokens: 8000
+memory_num_tokens: 525
+```
+
+Source:
+
+https://www.reddit.com/r/ChatGPT/comments/1f879xy
+
+This is a community observation, not an OpenAI contract.
+
+## November–December 2025 observations
+
+A reverse-engineering/utility-script discussion reported responses from:
+
+```text
+GET https://chatgpt.com/backend-api/memories?include_memory_entries=false
+```
+
+with examples such as:
+
+```text
+memory_max_tokens: 5000000
+memory_num_tokens: 8927
+```
+
+and another observed response with approximately:
+
+```text
+memory_max_tokens: 5000000
+memory_num_tokens: 8225
+```
+
+Participants associated the 5,000,000 value with some Plus accounts; the same discussion also contained reports of substantially smaller values on other account types. Those plan-specific claims were not independently verified.
+
+Source:
+
+https://linux.do/t/topic/1175093
+
+## 2026 third-party SDK documentation
+
+A reverse-engineered ChatGPT backend SDK documents an example response with:
+
+```text
+memory_max_tokens: 12000
+memory_num_tokens: 123
+```
+
+and notes that individual memory items may expose fields such as `conversation_id`, `created_timestamp`, `gizmo_id`, `last_updated`, and `labels`.
+
+Source:
+
+https://github.com/B4PT0R/codex-backend-sdk/blob/main/docs/backend-api.md
+
+## Migration-tool observation
+
+A separate migration toolkit reports using `include_memory_entries=true` and shows an example export header around:
+
+```text
+9,323 / 5,000,000 tokens
+```
+
+with 203 exported memory entries, split by the tool into 199 active and 4 older/less-relevant entries.
+
+The active/older terminology may be the migration tool's interpretation rather than a native ChatGPT schema and must be treated accordingly.
+
+Source:
+
+https://github.com/Siamsnus/GPT2Claude-Migration-Kit/blob/main/CHANGELOG.md
+
+## Interpretation boundary
+
+The variation from approximately 8,000 → 5,000,000 → 12,000 across observations strongly warns against interpreting `memory_max_tokens` as a stable universal runtime context limit.
+
+Possible interpretations include persistent-memory accounting, account/product-specific budgets, an indexed corpus limit, legacy memory capacity, or semantics that changed across generations.
+
+**None of these observations prove how many memory tokens are inserted into the answering model's prompt.**
+
+---
+
+# 71. Exact Client-Surface Observations for Legacy Memory and Dreaming
+
+**Class: E — reverse engineering / frontend observation**
+
+The following exact paths/parameters have been publicly observed and should be preserved without treating them as supported APIs.
+
+## Legacy-looking memory surface
+
+Observed request family:
+
+```text
+GET /backend-api/memories
+```
+
+Recent reverse-engineered clients have shown queries such as:
+
+```text
+/backend-api/memories?exclusive_to_gizmo=false&include_memory_entries=false
+```
+
+The parameter names suggest at least some client-facing scoping between ordinary/gizmo memory and whether individual memory entries are returned.
+
+Observed source:
+
+https://github.com/WangTianYou537/OAI-Reg/blob/main/chatgpt_login.py
+
+## Dreaming / About You summary surface
+
+Independent 2026 frontend analysis reports that opening/regenerating the Dreaming-era About You / Memory Summary uses:
+
+```text
+/backend-api/memories/about_you/summary/regenerate
+```
+
+Source:
+
+https://husain-zaidi.com/chatgpt-dreaming/
+
+## Architectural implication
+
+The existence of distinct legacy `/memories` and newer `/memories/about_you/summary/...` client surfaces strengthens—but does not prove—the conclusion that improved-memory/Dreaming functionality is not simply a UI rename of the original saved-memory table.
+
+The two surfaces may still share storage or services internally. That relationship remains unknown.
+
+---
+
+# 72. Current OpenAI Codex Memory — Uncompressed Production Mechanics
+
+**Class: D — current adjacent OpenAI implementation, not ChatGPT proof**
+
+The public Codex source reveals substantially more implementation detail than the earlier high-level summary preserved.
+
+## Phase 1 — per-thread extraction
+
+Individual rollouts/threads are processed into DB-backed stage-1 memory output records. Public code/README material describes fields/state including raw memory content, rollout summary information, thread identity, source-update time, generation time, and job state.
+
+Failed jobs use retry/backoff behavior rather than hot-looping.
+
+## State database
+
+Current source shows a memory store backed by SQLite pools and explicit tables/state for stage-1 outputs and memory jobs.
+
+This is **Codex-specific implementation evidence**, not proof that ChatGPT Dreaming uses SQLite.
+
+## Usage tracking
+
+When a stage-1 memory is cited/used, Codex can increment:
+
+```text
+usage_count
+```
+
+and update:
+
+```text
+last_usage
+```
+
+This provides a concrete current OpenAI implementation of memory reinforcement through use.
+
+## Phase 2 — global consolidation
+
+Current Codex documentation says Phase 2:
+
+- claims a single global phase-2 lock/lease before mutating the memory workspace;
+- loads a bounded set of eligible stage-1 outputs;
+- ignores memories whose `last_usage` is outside the configured `max_unused_days` window;
+- falls back to generation/source time for fresh memories that have never been used;
+- ranks eligible memories primarily by `usage_count`, then by recent usage/generation recency;
+- consolidates selected inputs into the higher-level memory workspace/artifacts.
+
+The state code describes ranking behavior equivalent to:
+
+```text
+usage_count DESC
+then recent last_usage/source time DESC
+```
+
+before returning a stable selected set.
+
+## Retention / pruning
+
+Codex can prune stale unselected stage-1 outputs based on a configurable maximum unused period while preserving relevant baseline/job-watermark state.
+
+## Configuration surface
+
+Current public Codex config includes controls such as:
+
+```text
+generate_memories
+use_memories
+dedicated_tools
+disable_on_external_context
+max_raw_memories_for_consolidation
+max_unused_days
+max_rollout_age_days
+max_rollouts_per_startup
+```
+
+This demonstrates that memory generation, memory use, deep tools, retention, consolidation breadth, and rollout eligibility are separately configurable in a current OpenAI memory implementation.
+
+## Why this matters
+
+Codex is direct proof that OpenAI currently uses a production memory pattern containing:
+
+```text
+per-thread extraction
+      ↓
+persistent job/state DB
+      ↓
+usage + recency signals
+      ↓
+serialized global consolidation
+      ↓
+hierarchical memory artifacts
+      ↓
+selective later retrieval/use
+```
+
+It remains **adjacent evidence only**. ChatGPT's Dreaming V3 storage, models, scheduling, and ranking can differ completely.
+
+Primary current sources:
+
+https://github.com/openai/codex/blob/main/codex-rs/memories/README.md
+
+https://github.com/openai/codex/blob/main/codex-rs/state/src/runtime/memories.rs
+
+https://github.com/openai/codex/blob/main/codex-rs/config/src/types.rs
+
+https://github.com/openai/codex/blob/main/codex-rs/memories/write/templates/memories/consolidation.md
+
+https://github.com/openai/codex/blob/main/codex-rs/ext/memories/templates/memories/read_path.md
+
+---
+
+# 73. Historical Group-Chat Memory Boundary
+
+**Class: Historical A**
+
+The 2025–2026 Group Chats pilot provides another explicit example of a memory namespace/access boundary.
+
+During the pilot, OpenAI documented that:
+
+- group chats were separate from private one-to-one chats;
+- personal account-level memory was not used in group chats;
+- account-level custom instructions were not used in group chats;
+- group conversations did not create new personal memories;
+- group-specific custom instructions could exist separately;
+- ChatGPT's accessible context inside the group was limited to group messages/files/images, participant metadata, and group-specific instructions.
+
+This is important historical evidence that OpenAI treats memory access as a policy/scope decision rather than a universal account-global read.
+
+OpenAI began winding down Group Chats on July 9, 2026; existing history was retained while chats transitioned toward read-only status. Therefore this is **historical product evidence**, not a currently expanding memory surface.
+
+Sources:
+
+https://openai.com/index/group-chats-in-chatgpt/
+
+https://help.openai.com/en/articles/12703475-group-chats-in-chatgpt
+
+https://help.openai.com/en/articles/12703475-
+
+---
+
+# 74. Official Product-History Details Before Dreaming V3
+
+**Class: Historical A**
+
+OpenAI's original Memory announcement page contains a useful dated product evolution that complements the later Dreaming article.
+
+## February 13, 2024
+
+OpenAI began testing Memory with a subset of Free and Plus users. Users could explicitly request memory, inspect what ChatGPT remembered, ask it to forget information, and disable the feature.
+
+## September 5, 2024
+
+OpenAI updated the announcement to say Memory was available to Free, Plus, Team, and Enterprise users and that ChatGPT surfaced when memories were updated.
+
+## April 10, 2025
+
+OpenAI described Memory as becoming more comprehensive by referencing **all past conversations** for eligible users, with two product concepts described to users:
+
+```text
+saved memories
++
+chat history / insights from past chats
+```
+
+This is important historical product evidence that past-chat-derived personalization was already a first-class user-facing concept before the Dreaming V3 announcement.
+
+## June 3, 2025
+
+OpenAI described a lightweight memory improvement for Free users providing shorter-term continuity, while Plus/Pro memory was described as providing longer-term understanding.
+
+The later Dreaming article clarifies that the 2025 generation included Saved Memories + Dreaming V0 and that V0 was not yet the final standalone architecture.
+
+Source:
+
+https://openai.com/index/memory-and-new-controls-for-chatgpt/
+
+---
+
+# 75. Memory Summary and Legacy Saved-Memory Management Details
+
+**Class: A**
+
+Current Memory FAQ details that must remain explicit:
+
+## Memory Summary updates
+
+- The Memory Summary is automatically updated as new context accumulates.
+- The UI exposes a “last updated” time.
+- Users can type requested changes into the summary-management interface.
+- Users can also make corrections through the associated menu controls.
+
+## Sources are intentionally incomplete
+
+OpenAI says Sources are designed to improve transparency/control but **may not show every factor or source** that shaped a response.
+
+Memory sources are also not necessarily included when a chat is shared.
+
+## Improved memory vs legacy saved memories
+
+The current product explicitly exposes an **improved memory** experience and a separate **legacy saved memories** mode. Users can move between them in Memory settings.
+
+This is direct product evidence that “Memory” and “Saved Memories” should not be treated as architecturally identical labels.
+
+## Deleted saved-memory logs
+
+OpenAI says it may retain logs of deleted Saved Memories for up to **30 days** for safety/debugging purposes.
+
+This retention rule applies to the legacy saved-memory system and should not be generalized into a complete Dreaming V3 data-retention architecture.
+
+Primary source:
+
+https://help.openai.com/en/articles/8590148
+
+---
+
+# 76. Project Memory Transition Semantics
+
+**Class: A**
+
+Current project documentation exposes additional scope-transition behavior beyond the basic “project-only” boundary.
+
+## Switching to project-only memory
+
+When a project is switched to project-only memory:
+
+- information from that project is removed from memory used outside the project;
+- the project's chats and files remain available inside the project;
+- the change may take a few hours to fully take effect.
+
+This is strong evidence that **memory-scope eligibility can change independently of source-data persistence**.
+
+## Shared projects
+
+Current shared projects are automatically set to project-only memory and cannot be switched to default memory.
+
+They do not have access to an individual member's:
+
+- outside-project context;
+- account-level custom instructions;
+- memories outside the shared project.
+
+## Temporary Chat interaction
+
+Temporary Chats cannot be added to projects.
+
+## Project memory remains non-list-based
+
+OpenAI still says there is no conventional list of project memories; same-project conversations can supply context directly.
+
+Primary source:
+
+https://help.openai.com/en/articles/10169521-projects-in-chatgpt
+
+---
+
+# 77. Expanded OpenAI Personalization-Memory Research Evidence
+
+**Class: A — organizational/research-direction evidence**
+
+Two OpenAI research-role families provide complementary evidence about how the company approaches memory.
+
+## Personal AGI — Memory
+
+The Memory role describes work spanning:
+
+- memory architecture;
+- post-training;
+- long-horizon tasks for training/evaluation;
+- reinforcement learning;
+- general-purpose memory across ChatGPT and agentic products.
+
+Known role URL:
+
+https://openai.com/careers/research-engineer-research-scientist-personal-agi-memory-san-francisco/
+
+## Personal AGI — Personalization
+
+The Personalization role describes work including:
+
+- reinforcement learning;
+- dataset creation;
+- evaluations;
+- other post-training methods;
+- user signals and human data;
+- improving how frontier models use memory/personalization.
+
+Source:
+
+https://openai.com/careers/research-engineer-research-scientist-personal-agi-personalization-san-francisco/
+
+## Interpretation boundary
+
+Job descriptions establish organizational priorities and methods. They do **not** expose the production Dreaming V3 backend schema, model, prompts, or retrieval stack.
+
+---
+
+# 78. Primary Evidence Registry Addendum — Completeness Pass
+
+The following sources were discovered or restored explicitly during the V2.1 completeness pass and must remain in the permanent evidence registry.
+
+## OpenAI current / historical product documentation
+
+**Original Memory announcement and 2024–2025 updates**  
+https://openai.com/index/memory-and-new-controls-for-chatgpt/
+
+**Dreaming V3**  
+https://openai.com/index/chatgpt-memory-dreaming/
+
+**Memory FAQ**  
+https://help.openai.com/en/articles/8590148
+
+**ChatGPT release notes**  
+https://help.openai.com/en/articles/6825453-chatgpt-release-notes
+
+**Projects**  
+https://help.openai.com/en/articles/10169521-projects-in-chatgpt
+
+**Temporary Chat**  
+https://help.openai.com/en/articles/8914046-temporary-chat-faq
+
+**Historical Group Chats announcement**  
+https://openai.com/index/group-chats-in-chatgpt/
+
+**Group Chats help / retirement documentation**  
+https://help.openai.com/en/articles/12703475-group-chats-in-chatgpt  
+https://help.openai.com/en/articles/12703475-
+
+## OpenAI patents
+
+**US20250200361A1**  
+https://patents.google.com/patent/US20250200361A1/en
+
+**WO2025128397A1**  
+https://patents.google.com/patent/WO2025128397A1/en
+
+**Patent 12,591,766**  
+https://patents.justia.com/patent/12591766
+
+**Patent 12,699,964**  
+https://patents.justia.com/patent/12699964
+
+**Patent 12,706,918**  
+https://patents.justia.com/patent/12706918
+
+**Patent 12,430,518**  
+https://patents.google.com/patent/US12430518B2/en
+
+## OpenAI public Codex implementation
+
+**Memory architecture README**  
+https://github.com/openai/codex/blob/main/codex-rs/memories/README.md
+
+**Memory state/runtime code**  
+https://github.com/openai/codex/blob/main/codex-rs/state/src/runtime/memories.rs
+
+**Memory configuration types**  
+https://github.com/openai/codex/blob/main/codex-rs/config/src/types.rs
+
+**Consolidation instructions**  
+https://github.com/openai/codex/blob/main/codex-rs/memories/write/templates/memories/consolidation.md
+
+**Memory read path**  
+https://github.com/openai/codex/blob/main/codex-rs/ext/memories/templates/memories/read_path.md
+
+## Direct interview / design intent
+
+**Limitless — interview with OpenAI memory/personalization leads, October 6, 2025**  
+https://limitless.fm/episodes/we-interviewed-the-team-behind-openais-1-feature/transcript
+
+## Empirical study
+
+**The Algorithmic Self-Portrait: Deconstructing Memory in ChatGPT**  
+https://arxiv.org/abs/2602.01450
+
+## Client / reverse-engineering observations
+
+**B4PT0R backend SDK documentation**  
+https://github.com/B4PT0R/codex-backend-sdk/blob/main/docs/backend-api.md
+
+**Dreaming frontend analysis**  
+https://husain-zaidi.com/chatgpt-dreaming/
+
+**OAI-Reg observed frontend bootstrap memory request**  
+https://github.com/WangTianYou537/OAI-Reg/blob/main/chatgpt_login.py
+
+**2025 memory-capacity network observation thread**  
+https://linux.do/t/topic/1175093
+
+**2024 community endpoint observation**  
+https://www.reddit.com/r/ChatGPT/comments/1f879xy
+
+**GPT2Claude Migration Kit memory export observations**  
+https://github.com/Siamsnus/GPT2Claude-Migration-Kit/blob/main/CHANGELOG.md
+
+---
+
+# 79. Version 2.1 Change Log — Completeness Pass
+
+**Date:** September 8, 2026
+
+Version 2.1 does **not** materially change the central architecture conclusion from V2.0. It changes the completeness standard and restores evidence that V2.0 had compressed or omitted.
+
+Added/restored explicitly:
+
+- permanent no-evidence-compression rule;
+- October 2025 direct interview with OpenAI memory/personalization leads;
+- cognitive-memory design-intent statements from that interview;
+- OpenAI's assistant/representative long-term personalization framing;
+- Patent 12,706,918 as a third contemporary corroborating personalization-state patent;
+- full known metadata for US20250200361A1 / WO2025128397A1;
+- historical patent inventor list;
+- exact illustrative note/token capacity examples from the historical patent;
+- alternative historical memory representations;
+- historical natural-language memory-management concepts;
+- personalized-vs-non-personalized candidate-response embodiment;
+- cross-thread “bad week” inference example;
+- explicit Dreaming V3 2× Plus/Pro capacity statement;
+- explicit ~5× Free serving/compute-efficiency statement;
+- exact 2024 `memory_max_tokens≈8000` client observation;
+- exact 2025 `memory_max_tokens≈5000000` client observations;
+- 2026 `memory_max_tokens≈12000` reverse-engineered SDK example;
+- individual memory metadata fields observed by third-party SDK tooling;
+- exact Dreaming `/about_you/summary/regenerate` client path;
+- `exclusive_to_gizmo` / `include_memory_entries` client parameters;
+- current Codex state DB, retry/backoff, leases, usage-count, last-usage, retention, ranking, and global-lock mechanics;
+- historical Group Chat memory boundary and retirement status;
+- February 2024 / September 2024 / April 2025 / June 2025 official product-history details;
+- current Memory Summary last-updated/correction behavior;
+- legacy deleted-memory 30-day safety/debug log detail;
+- project memory transition semantics;
+- shared-project project-only behavior;
+- both Memory and Personalization research-role evidence;
+- expanded permanent evidence registry.
+
+The purpose of this revision is explicit:
+
+> **Future summaries may become shorter, but the evidence ledger inside this canonical file must never become less complete.**
+
+---
+
+# 80. Current Final Conclusion — Version 2.1
+
+As of September 8, 2026, the combined evidence supports a highly consistent picture:
+
+**ChatGPT memory is a layered, governed, relevance-routed long-term personalization system rather than a single memory database.**
+
+Current product facts establish:
+
+- Dreaming-based background synthesis;
+- continuously updated derived user state;
+- separate search/retrieval of specific historical conversations;
+- temporal updating;
+- preference/constraint memory;
+- importance/salience selection;
+- partial provenance through Sources;
+- explicit corrections and user control;
+- runtime paths that can bypass personalization;
+- independently governable memory read/write behavior;
+- project/workspace/source scope boundaries;
+- frontier-model post-training for memory and personalization.
+
+Contemporary OpenAI patents repeatedly describe essentially the same architectural family:
+
+```text
+persisted personalization state
+        +
+synthesized concepts
+        +
+conversation summaries / searchable history
+        +
+search of past interactions
+        +
+typed context management
+        ↓
+model context
+```
+
+Historical OpenAI memory design shows clear architectural ancestry:
+
+```text
+selective learned memory writes
+        +
+compact personalization notepad
+        +
+asynchronous consolidation
+        +
+recency/use-based retention
+        +
+multiple memory identities
+        +
+deep topic/embedding session memory
+```
+
+Current public Codex code independently demonstrates OpenAI using a production memory pattern based on:
+
+```text
+raw evidence
+→ per-thread extraction
+→ persistent memory/job state
+→ usage + recency ranking
+→ serialized consolidation
+→ compact routing memory
+→ deeper searchable memory
+→ selective runtime use
+```
+
+Client observations add implementation clues but do not override official evidence. In particular, the huge variation in observed `memory_max_tokens` values demonstrates that those fields cannot safely be interpreted as the number of memory tokens placed into the model context.
+
+The strongest current abstraction remains:
+
+> **History is evidence. Dreaming compiles history into current state. Retrieval recovers relevant episodes. Governance determines what can flow where. Relevance determines what gets activated. Context management assembles what the model sees. The model decides how to use it.**
+
+And the permanent research rule is now:
+
+> **Preserve every material fact, source, observation, contradiction, historical value, caveat, and unknown. Summaries may compress conclusions; they must not erase evidence.**
 
 That is the current canonical source of truth.
