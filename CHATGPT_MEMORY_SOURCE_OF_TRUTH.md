@@ -1,8 +1,8 @@
 # ChatGPT Memory — Master Source of Truth
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Last verified:** September 8, 2026  
-**Supersedes:** Version 2.0  
+**Supersedes:** Version 2.1  
 **Scope:** ChatGPT consumer chat-mode memory, plus directly relevant OpenAI system designs, historical implementations, adjacent OpenAI memory implementations, and empirical/client observations.  
 **Purpose:** Maintain one canonical, evidence-graded account of what is publicly known about ChatGPT memory, what can reasonably be inferred, and what remains unknown.
 
@@ -2831,6 +2831,281 @@ The strongest current abstraction remains:
 > **History is evidence. Dreaming compiles history into current state. Retrieval recovers relevant episodes. Governance determines what can flow where. Relevance determines what gets activated. Context management assembles what the model sees. The model decides how to use it.**
 
 And the permanent research rule is now:
+
+> **Preserve every material fact, source, observation, contradiction, historical value, caveat, and unknown. Summaries may compress conclusions; they must not erase evidence.**
+
+That is the current canonical source of truth.
+
+---
+
+# 81. Empirical Runtime Observation — Connected Apps / Tools Can Coincide with Saved-Memory Write Failure
+
+**Class: E — user-side reproducible observation; not an OpenAI-confirmed product rule**
+
+On September 6, 2026, an OpenAI Developer Community user published a controlled same-conversation test suggesting that **after a connected app or tool is used, new legacy Saved Memory writes can become unavailable while reads of existing memories continue to work**.
+
+Reported test sequence:
+
+```text
+1. Save unique memory A → succeeds
+2. Use one connected app/tool once
+3. Save unique memory B → fails or silently does not persist
+```
+
+The author reported reproductions involving:
+
+- Google Drive;
+- Gmail;
+- Google Calendar;
+- Notion;
+- web search.
+
+An earlier observed error message reportedly stated that the historical `bio` tool had been disabled because another tool incompatible with memory usage had been used in the conversation, and that the information was not saved to model-set context.
+
+Later reproductions sometimes failed silently without that explicit error.
+
+The same author also reported day-to-day variation, including workflows that succeeded on one day and failed the next under otherwise similar device/app/model conditions.
+
+## What this can establish
+
+It is evidence that at least one deployed ChatGPT memory-write path has shown **runtime compatibility or gating behavior associated with tool/connector use**.
+
+It strengthens the architectural distinction:
+
+```text
+memory read eligibility
+      ≠
+memory write eligibility
+      ≠
+tool/action eligibility
+```
+
+## What it cannot establish
+
+It does **not** establish whether the cause is:
+
+- intentional product policy;
+- a bug;
+- a temporary rollout condition;
+- a legacy Saved Memory limitation;
+- a specific historical `bio`-tool restriction;
+- a security boundary;
+- another hidden runtime condition.
+
+It also does not prove that Dreaming V3 background synthesis follows the same restriction.
+
+Source:
+
+https://community.openai.com/t/saved-memory-becomes-unavailable-after-using-a-connected-app-reproducible-within-a-session-and-not-limited-to-google-connectors/1395159
+
+---
+
+# 82. Empirical Failure Observation — Memory Can Exist Yet Fail at Retrieval, Activation, or Model Use
+
+**Class: E — anecdotal/community failure evidence; not a controlled product specification**
+
+A September 6, 2026 OpenAI Developer Community report describes cases where users believed information still existed in memory or project history but ChatGPT failed to retrieve or apply it reliably.
+
+Reported behaviors included:
+
+- failure to recover context from previous chats in the same Project;
+- failure to apply instructions believed to be saved in Memory;
+- responses that appeared to agree with user-supplied reminders rather than actually retrieving prior evidence;
+- inconsistent retrieval across different conversations;
+- claims that historical-context tooling returned no result.
+
+The report also says some conversations continued to retrieve context correctly, which argues against treating it as evidence of a total memory-system outage.
+
+## Architectural relevance
+
+This observation supports retaining separate failure categories for:
+
+```text
+persistence
+retrieval
+ranking
+activation
+model application
+provenance / truthful attribution
+```
+
+A user-visible “memory failure” does not identify which layer failed.
+
+## Evidence boundary
+
+This is a community bug report, not controlled laboratory evidence and not an OpenAI confirmation of the root cause. It should be used as a failure-mode observation only.
+
+Source:
+
+https://community.openai.com/t/chatgpt-recalls-saved-memory-but-fails-to-apply-it-and-invents-plausible-context-instead-of-verifying-history/1393739/2
+
+---
+
+# 83. Current Codex Adjacent Evidence — Read-Path Scope Bug and 5,000-Token Summary Injection Budget
+
+**Class: D/E — adjacent OpenAI implementation plus public bug analysis; not ChatGPT proof**
+
+OpenAI Codex issue #17496, opened April 11, 2026, documents an architectural mismatch between Codex's memory write/consolidation scoping and its fresh-session read path.
+
+The issue traces current public code showing that:
+
+- memory consolidation preserves `cwd` / project scope metadata;
+- `MEMORY.md` blocks can carry `applies_to: cwd=...` style scoping;
+- the consolidated summary is organized by project/cwd context;
+- but a fresh-session initial-context path can read and inject the **entire global `memory_summary.md`** rather than first filtering it to the current cwd/project;
+- the injected summary is truncated to **5,000 tokens** in the cited Codex code path.
+
+The report therefore identifies a concrete adjacent failure mode:
+
+```text
+correctly scoped stored memory
+        ↓
+insufficiently scoped runtime injection
+        ↓
+irrelevant memory crowding / bias
+```
+
+The issue explicitly distinguishes this from every-turn reinjection: the reported behavior concerns the fresh-baseline/new-conversation path.
+
+## Why this matters for the research model
+
+Codex gives us a concrete OpenAI example where **storage scope and runtime retrieval/injection scope are separate engineering problems**. Correct metadata at write/consolidation time does not guarantee correct activation at runtime.
+
+It also provides a concrete adjacent example of a bounded always-available memory-summary budget.
+
+## Strict boundary
+
+None of this proves that ChatGPT Dreaming V3:
+
+- uses `memory_summary.md`;
+- has a 5,000-token memory budget;
+- uses cwd-style scoping;
+- has the same bug.
+
+It belongs only in the adjacent OpenAI implementation evidence class.
+
+Source:
+
+https://github.com/openai/codex/issues/17496
+
+---
+
+# 84. Current Official Documentation Inconsistency — Temporary Chat General vs Feature-Specific Wording
+
+**Class: A — documented product-language inconsistency with resolution by source precedence**
+
+As of September 8, 2026, current OpenAI documentation contains two different levels of specificity about Temporary Chat.
+
+The general Memory FAQ uses blanket wording that Temporary Chats do not use existing memories or create new memories.
+
+The newer, feature-specific Temporary Chat FAQ and August 27, 2026 release notes explicitly distinguish two modes:
+
+```text
+non-personalized Temporary Chat
+→ does not use memory
+→ does not create memory
+
+personalized Temporary Chat
+→ can use existing memories
+→ can use custom instructions/plugins
+→ does not create or update memories while temporary
+```
+
+The dedicated Temporary Chat FAQ also says account/workspace restrictions take priority over the per-chat personalization choice and that limited prior-conversation context can still be used for safety/security purposes.
+
+## Resolution
+
+Under this repository's source-precedence rule, the **newer, feature-specific Temporary Chat documentation controls the present-state conclusion**.
+
+The general Memory FAQ wording should be preserved as a documentation inconsistency rather than promoted over the dedicated feature documentation.
+
+Sources:
+
+https://help.openai.com/en/articles/8590148
+
+https://help.openai.com/en/articles/8914046-temporary-chat-faq
+
+https://help.openai.com/en/articles/6825453-chatgpt-release-notes
+
+---
+
+# 85. Improved Memory Is Independently Governed in Regulated Workspaces
+
+**Class: A — current product governance evidence**
+
+The current Memory FAQ explicitly says **improved memory is distinct from Memory generally and from legacy Saved Memories**.
+
+For ChatGPT for Healthcare and Enterprise Regulated Workspace, OpenAI says improved memory is **disabled by default** and workspace owners/admins can make it available to eligible roles.
+
+OpenAI further notes that this improved-memory functionality is not covered under the referenced BAA guidance and directs organizations that want tighter boundaries toward Project-only memory.
+
+## Architectural implication
+
+This adds another confirmed governance dimension:
+
+```text
+feature exists at product level
+        ↓
+workspace policy gate
+        ↓
+role eligibility
+        ↓
+user availability
+        ↓
+project-level scope can further constrain context
+```
+
+That is direct current evidence that memory capability, memory scope, and authorization are distinct layers.
+
+Primary source:
+
+https://help.openai.com/en/articles/8590148
+
+---
+
+# 86. Version 2.2 Change Log — Runtime / Failure / Governance Completeness Pass
+
+**Date:** September 8, 2026
+
+Version 2.2 preserves all V2.1 evidence and adds newly surfaced runtime and failure observations without changing the central architecture conclusion.
+
+Added:
+
+- September 2026 empirical connected-app/tool memory-write failure observation;
+- historical `bio`-tool incompatibility error wording as an observed runtime clue;
+- explicit distinction between read eligibility, write eligibility, and tool compatibility;
+- September 2026 empirical retrieval/activation/model-use failure report;
+- preservation of truthful-provenance failure as a separate memory failure class;
+- Codex issue #17496 as adjacent evidence for write-scope vs runtime-injection-scope mismatch;
+- Codex fresh-session whole-summary injection observation;
+- explicit **5,000-token** Codex summary injection cap from the cited code path;
+- current official Temporary Chat documentation inconsistency;
+- source-precedence resolution favoring the newer feature-specific Temporary Chat FAQ;
+- limited safety/security prior-context exception for Temporary Chat;
+- regulated-workspace improved-memory controls;
+- explicit role/workspace authorization as a memory-governance dimension.
+
+No new empirical observation in this revision is promoted to a confirmed Dreaming V3 production fact.
+
+---
+
+# 87. Current Final Conclusion — Version 2.2
+
+As of September 8, 2026, the strongest public evidence still supports the same core architecture:
+
+**ChatGPT memory is a layered, governed, relevance-routed long-term personalization system rather than a single memory database.**
+
+The V2.2 evidence sharpens one additional principle:
+
+> **Memory correctness depends not only on what is stored, but on whether the runtime is allowed to read it, allowed to write it, able to retrieve it, scoped to the right context, and able to apply it truthfully and correctly.**
+
+Current product facts establish Dreaming-based synthesis, historical conversation retrieval, partial provenance, explicit user controls, scope boundaries, relevance gating, and model post-training. Contemporary OpenAI patents repeatedly describe synthesized personalization state plus searchable historical interactions. Historical patents show a clear lineage of selective memory writing, consolidation, deep episodic retrieval, and scoped identities. Current Codex provides adjacent public implementation evidence for hierarchical memory, usage/recency ranking, bounded prompt memory, and the fact that stored scope and runtime activation scope can fail independently.
+
+The strongest overall abstraction remains:
+
+> **History is evidence. Dreaming compiles history into current state. Retrieval recovers relevant episodes. Governance determines what can flow where. Relevance determines what gets activated. Context management assembles what the model sees. The model decides how to use it.**
+
+And the permanent evidence rule remains:
 
 > **Preserve every material fact, source, observation, contradiction, historical value, caveat, and unknown. Summaries may compress conclusions; they must not erase evidence.**
 
